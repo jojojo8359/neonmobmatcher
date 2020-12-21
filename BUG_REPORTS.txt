@@ -1,0 +1,29 @@
+Version 0.1 2020-12-14
+
+shadow:~-> python3 neonmobmatcher.py 
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "/usr/lib/python3.6/tkinter/__init__.py", line 1705, in __call__
+    return self.func(*args)
+  File "neonmobmatcher.py", line 137, in SubmitQuery
+    self.nm_app.DoLookup(have_setid, have_name, want_setid, want_name)
+  File "neonmobmatcher.py", line 159, in DoLookup
+    shared_series_cards, have_name))
+  File "neonmobmatcher.py", line 173, in GetSeekers
+    str(card['id']) + "]...\n.\n")
+TypeError: 'int' object is not subscriptable
+shadow:~-> python3 neonmobmatcher.py 
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "/usr/lib/python3.6/tkinter/__init__.py", line 1705, in __call__
+    return self.func(*args)
+  File "neonmobmatcher.py", line 137, in SubmitQuery
+    self.nm_app.DoLookup(have_setid, have_name, want_setid, want_name)
+  File "neonmobmatcher.py", line 159, in DoLookup
+    shared_series_cards, have_name))
+  File "neonmobmatcher.py", line 173, in GetSeekers
+    str(card['id']) + "]...\n.\n")
+TypeError: 'int' object is not subscriptable
+
+==============================================================================
+
