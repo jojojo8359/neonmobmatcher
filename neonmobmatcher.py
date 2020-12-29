@@ -10,6 +10,8 @@
 
 import sys
 import tkinter as tk
+if sys.platform.startswith('darwin'):
+    import tkmacosx as tkx
 import requests
 
 
@@ -23,7 +25,11 @@ class ScrolledText(tk.Frame):
 
     def MakeWidgets(self):
         sbar = tk.Scrollbar(master=self)
-        text = tk.Text(master=self, relief=tk.SUNKEN, width=120)
+        if sys.platform.startswith('darwin'):
+            text = tk.Text(master=self, relief=tk.SUNKEN, width=120,
+                           highlightbackground="black")
+        else:
+            text = tk.Text(master=self, relief=tk.SUNKEN, width=120)
         sbar.config(command=text.yview)
         text.config(yscrollcommand=sbar.set)
         sbar.pack(side=tk.RIGHT, fill=tk.Y)
@@ -75,12 +81,23 @@ class MatcherGui:
         self.entry_4.grid(row=0, column=1, sticky="w")
 
         self.frame_5 = tk.Frame(master=self.window)
-        self.button_submit = tk.Button(master=self.frame_5,
-                                       text="Submit",
-                                       command=self.SubmitQuery)
-        self.button_quit = tk.Button(master=self.frame_5,
-                                     text="Quit",
-                                     command=self.QuitProg)
+        if sys.platform.startswith('darwin'):
+            self.button_submit = tkx.Button(master=self.frame_5,
+                                            text="Submit",
+                                            bg='white',
+                                            fg='black',
+                                            command=self.SubmitQuery)
+            self.button_quit   = tkx.Button(master=self.frame_5,
+                                            text="Quit",
+                                            bg='white', fg='black',
+                                            command=self.QuitProg)
+        else:
+            self.button_submit = tk.Button(master=self.frame_5,
+                                           text="Submit",
+                                           command=self.SubmitQuery)
+            self.button_quit   = tk.Button(master=self.frame_5,
+                                           text="Quit",
+                                           command=self.QuitProg)
         self.button_submit.grid(row=0, column=0, sticky="w")
         self.button_quit.grid(row=0, column=1, sticky="w")
 
