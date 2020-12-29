@@ -2,7 +2,7 @@
 
 # ****************************************************************************
 # NeonMob Trade Matcher Tool
-# Version: 0.2
+# Version: 0.3
 # ****************************************************************************
 # Copyright (c) 2020 Joel Keaton
 # All rights reserved.
@@ -345,6 +345,14 @@ class NeonMobMatcher:
             self.gui.Print("\nNo matches found.\n")
 
         for trader in trader_list:
+            needs_spec_perc = "--"
+            has_spec_perc = "--"
+            if trader['needs_special_piece_count'] > 0:
+                needs_spec_perc = str(int((trader['needs_owned_special_piece_count'] /
+                                           trader['needs_special_piece_count']) * 100))
+            if trader['has_special_piece_count'] > 0:
+                has_spec_perc = str(int((trader['has_owned_special_piece_count'] /
+                                         trader['has_special_piece_count']) * 100))
             self.gui.Print(trader['name'] + " (" +
                            self.ParseTraderGrade(trader['trader_score']) +
                            ")\n")
@@ -353,18 +361,13 @@ class NeonMobMatcher:
                             if trader['wishlisted'] == 1 else "\"") +
                            " from series \"" + trader['needs_card_set_name'] +
                            "\" (" + str(trader['needs_owned_percentage']) +
-                           "% core, " +
-                           str(int((trader['needs_owned_special_piece_count'] /
-                                    trader['needs_special_piece_count']) * 100)) +
-                           "% special)\n")
+                           "% core, " + needs_spec_perc + "% special)\n")
             self.gui.Print("Has: \"" + trader['has_card_name'] + "\" (" +
                            str(trader['print_count']) +
                            " copies) from series \"" +
                            trader['has_card_set_name'] + "\" (" +
                            str(trader['has_owned_percentage']) + "% core, " +
-                           str(int((trader['has_owned_special_piece_count'] /
-                                    trader['has_special_piece_count']) * 100)) +
-                           "% special)\n\n")
+                           has_spec_perc + "% special)\n\n")
 
     def ParseTraderGrade(self, grade):
         return self.grades[int(grade)]
