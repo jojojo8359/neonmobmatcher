@@ -47,34 +47,6 @@ def GetCards(setid):
     return cards
 
 
-def GetCardsRec(setid, set_name='', nxt='0', result=None):
-    if not nxt:
-        return
-    first = False
-    # error of some kind?
-
-    if nxt == '0':  # first case
-        set_url = "https://www.neonmob.com/api/setts/" + str(setid) + "/"
-        set_name = requests.request('GET', set_url).json()['name']
-        print("\nGetting cards from series \"" + set_name + "\"...")
-        first = True
-        nxt = "/api/sets/" + str(setid) + "/pieces/"
-    url = "https://neonmob.com" + nxt
-    data = requests.request('GET', url).json()
-    if first:
-        print("Cards: " + str(data['payload']['metadata']['resultset']['count']))  # increments by 50
-
-    if result is None:
-        result = []
-    for card in data['payload']['results']:
-        result.append({'name': card['name'],
-                      'id': card['id'],
-                      'setName': set_name})
-    print(". ", end='', flush=True)
-    GetCardsRec(setid, set_name=set_name, nxt=data['payload']['metadata']['resultset']['link']['next'], result=result)
-    return result
-
-
 def GetSeekers(card):
     if card['id'] == -1:
         print("\nCouldn't find card " + card['name'] + " in set " + card['setName'])
@@ -104,40 +76,6 @@ def GetSeekers(card):
     return seekers
 
 
-def GetSeekersRec(card, nxt='0', result=None):
-    if not nxt:
-        return
-    first = False
-    if card['id'] == -1:
-        print("\nCouldn't find card " + card['name'] + " in set " + card['setName'])
-        return []
-
-    if nxt == '0':  # first case
-        print("\nGetting seekers of " + card['name'] + " [" + str(card['id']) + "]...")
-        first = True
-        nxt = "/api/pieces/" + str(card['id']) + "/needers/?completion=desc&grade=desc&wishlisted=desc"
-    url = "https://neonmob.com" + nxt
-    data = requests.request('GET', url).json()
-    if first:
-        print("Seekers: " + str(data['count']))  # increments by 20
-
-    if result is None:
-        result = []
-    for seeker in data['results']:
-        result.append({'id': seeker['id'],
-                        'name': seeker['name'],
-                        'trader_score': seeker['trader_score'],
-                        'wishlisted': seeker['wishlisted'],
-                        'needs_special_piece_count': seeker['special_piece_count'],
-                        'needs_owned_special_piece_count': seeker['owned_special_piece_count'],
-                        'needs_owned_percentage': seeker['owned_percentage'],
-                        'needs_card_name': card['name'],
-                        'needs_card_set_name': card['setName']})
-    print(". ", end='', flush=True)
-    GetSeekersRec(card, nxt=data['next'], result=result)
-    return result
-
-
 def GetOwners(card):
     if card['id'] == -1:
         print("\nCouldn't find card " + card['name'] + " in set " + card['setName'])
@@ -165,41 +103,6 @@ def GetOwners(card):
                 break
             data = requests.request('GET', "https://www.neonmob.com" + nxt).json()
     return owners
-
-
-def GetOwnersRec(card, nxt='0', result=None):
-    if not nxt:
-        return
-    first = False
-    if card['id'] == -1:
-        print("\nCouldn't find card " + card['name'] + " in set " + card['setName'])
-        return []
-
-    if nxt == '0':  # first case
-        print("\nGetting owners of " + card['name'] + " [" +
-              str(card['id']) + "]...")
-        first = True
-        nxt = ("/api/pieces/" + str(card['id']) + "/owners/?completion=asc&grade=desc&owned=desc")
-    url = "https://neonmob.com" + nxt
-    data = requests.request('GET', url).json()
-    if first:
-        print("Owners: " + str(data['count']))  # increments by 20
-
-    if result is None:
-        result = []
-    for owner in data['results']:
-        result.append({'id': owner['id'],
-                       'name': owner['name'],
-                       'trader_score': owner['trader_score'],
-                       'print_count': owner['print_count'],
-                       'has_special_piece_count': owner['special_piece_count'],
-                       'has_owned_special_piece_count': owner['owned_special_piece_count'],
-                       'has_owned_percentage': owner['owned_percentage'],
-                       'has_card_name': card['name'],
-                       'has_card_set_name': card['setName']})
-    print(". ", end='', flush=True)
-    GetOwnersRec(card, nxt=data['next'], result=result)
-    return result
 
 
 def GetCardByName(card_list, name):
