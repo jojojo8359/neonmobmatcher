@@ -1,26 +1,27 @@
 import sys
 import requests
 from alive_progress import alive_bar
+from conditional import conditional
 
 
-def DoLookup(have_setid, have_name, want_setid, want_name):
+def DoLookup(have_setid, have_name, want_setid, want_name, showBar):
     if have_setid == want_setid:
-        shared_series_cards = GetCards(have_setid)
-        seekers = GetSeekers(GetCardByName(shared_series_cards, have_name))
+        shared_series_cards = GetCards(have_setid, showBar)
+        seekers = GetSeekers(GetCardByName(shared_series_cards, have_name), showBar)
         owners = []
         if len(seekers) != 0:
-            owners = GetOwners(GetCardByName(shared_series_cards, want_name))
+            owners = GetOwners(GetCardByName(shared_series_cards, want_name), showBar)
     else:
-        seekers = GetSeekers(GetCardByName(GetCards(have_setid), have_name))
+        seekers = GetSeekers(GetCardByName(GetCards(have_setid), have_name), showBar)
         owners = []
         if len(seekers) != 0:
-            owners = GetOwners(GetCardByName(GetCards(want_setid), want_name))
+            owners = GetOwners(GetCardByName(GetCards(want_setid), want_name), showBar)
 
     commons = FindCommonTraders(seekers, owners)
     ParseTraders(commons)
 
 
-def GetCards(setid):
+def GetCards(setid, showBar):
     set_url = "https://www.neonmob.com/api/setts/" + str(setid) + "/"
     data = requests.request('GET', set_url).json()
     set_name = data['name']
@@ -33,7 +34,7 @@ def GetCards(setid):
     print("\nGetting cards from series \"" + set_name + "\"...")
     cards = []
     nxt = "/api/sets/" + str(setid) + "/pieces/"
-    with alive_bar(total, bar='smooth', spinner='dots_recur') as bar:
+    with conditional(showBar, alive_bar(total, bar='smooth', spinner='dots_recur')) as bar:
         while True:
             data = requests.request('GET', "https://www.neonmob.com" + nxt).json()
             nxt = data['payload']['metadata']['resultset']['link']['next']
@@ -41,13 +42,16 @@ def GetCards(setid):
                 cards.append({'name': card['name'],
                               'id': card['id'],
                               'setName': set_name})
-                bar()
+                if showBar:
+                    bar()
+            if not showBar:
+                print(". ", end="", flush=True)
             if not nxt:
                 break
     return cards
 
 
-def GetSeekers(card):
+def GetSeekers(card, showBar):
     if card['id'] == -1:
         print("\nCouldn't find card " + card['name'] + " in set " + card['setName'])
         return []
@@ -56,7 +60,7 @@ def GetSeekers(card):
     data = requests.request('GET', "https://www.neonmob.com/api/pieces/" + str(card['id']) + "/needers/?completion=desc&grade=desc&wishlisted=desc").json()
     total = data['count']
 
-    with alive_bar(total, bar='smooth', spinner='dots_recur') as bar:
+    with conditional(showBar, alive_bar(total, bar='smooth', spinner='dots_recur')) as bar:
         while True:
             nxt = data['next']
             for seeker in data['results']:
@@ -69,14 +73,17 @@ def GetSeekers(card):
                                 'needs_owned_percentage': seeker['owned_percentage'],
                                 'needs_card_name': card['name'],
                                 'needs_card_set_name': card['setName']})
-                bar()
+                if showBar:
+                    bar()
+            if not showBar:
+                print(". ", end="", flush=True)
             if not nxt:
                 break
             data = requests.request('GET', "https://www.neonmob.com" + nxt).json()
     return seekers
 
 
-def GetOwners(card):
+def GetOwners(card, showBar):
     if card['id'] == -1:
         print("\nCouldn't find card " + card['name'] + " in set " + card['setName'])
         return []
@@ -85,7 +92,7 @@ def GetOwners(card):
     data = requests.request('GET', "https://www.neonmob.com/api/pieces/" + str(card['id']) + "/owners/?completion=asc&grade=desc&owned=desc").json()
     total = data['count']
 
-    with alive_bar(total, bar='smooth', spinner='dots_recur') as bar:
+    with conditional(showBar, alive_bar(total, bar='smooth', spinner='dots_recur')) as bar:
         while True:
             nxt = data['next']
             for owner in data['results']:
@@ -98,7 +105,10 @@ def GetOwners(card):
                                 'has_owned_percentage': owner['owned_percentage'],
                                 'has_card_name': card['name'],
                                 'has_card_set_name': card['setName']})
-                bar()
+                if showBar:
+                    bar()
+            if not showBar:
+                print(". ", end="", flush=True)
             if not nxt:
                 break
             data = requests.request('GET', "https://www.neonmob.com" + nxt).json()
@@ -175,7 +185,7 @@ def ParseTraderGrade(grade):
     return grades[int(grade)]
 
 
-def main():
+def main(showBar=False):
     have_setid = 0
     while True:
         have_setid_str = input("Have Set ID: ")
@@ -200,10 +210,10 @@ def main():
 
     want_name = input("Want Name: ")
 
-    DoLookup(have_setid, have_name, want_setid, want_name)
+    DoLookup(have_setid, have_name, want_setid, want_name, showBar)
 
 
 if __name__ == '__main__':
     # print(GetOwners({'name': 'Day 1', 'id': 180998, 'setName': 'The 100 Day Project II'}))
     # print(GetCards(20476))
-    main()
+    main(True)
