@@ -5,7 +5,8 @@ This tool allows the user to find other NeonMob card collectors for making speci
 - Python 3
 - TkInter (and TkMacOSX for Mac)
 - requests
-- conditional
+- alive_progress (for console version)
+- conditional (for console version)
 
 To install all required modules in your environment, just use `pip3 install -r requirements.txt` (or `pip3 install -r mac.txt` on Mac).
 
