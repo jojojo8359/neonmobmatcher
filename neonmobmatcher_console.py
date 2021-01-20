@@ -20,7 +20,7 @@ def DoLookup(have_setid, have_name, want_setid, want_name, showBar):
     commons = FindCommonTraders(seekers, owners)
     ParseTraders(commons)
 
-
+# 5910 Science Kills for Enchant
 def GetCards(setid, showBar):
     set_url = "https://www.neonmob.com/api/setts/" + str(setid) + "/"
     data = requests.request('GET', set_url).json()
@@ -35,19 +35,37 @@ def GetCards(setid, showBar):
     cards = []
     nxt = "/api/sets/" + str(setid) + "/pieces/"
     with conditional(showBar, alive_bar(total, bar='smooth', spinner='dots_recur')) as bar:
+        first = True
         while True:
-            data = requests.request('GET', "https://www.neonmob.com" + nxt).json()
-            nxt = data['payload']['metadata']['resultset']['link']['next']
-            for card in data['payload']['results']:
-                cards.append({'name': card['name'],
-                              'id': card['id'],
-                              'setName': set_name})
-                if showBar:
-                    bar()
-            if not showBar:
-                print(". ", end="", flush=True)
-            if not nxt:
+            raw = requests.request('GET', "https://www.neonmob.com" + nxt)
+            if raw.status_code == 500 and first:
+                print("Using fallback card endpoint...")
+                raw = requests.request('GET', "https://www.neonmob.com/api/sets/" + str(setid) + "/piece-names")
+                data = raw.json()
+                for card in data:
+                    cards.append({'name': card['name'],
+                                'id': card['id'],
+                                'setName': set_name})
+                    if showBar:
+                        bar()
+                if not showBar:
+                    print('...', end="", flush=True)
                 break
+            else:
+                print(raw.status_code)
+                data = raw.json()
+                nxt = data['payload']['metadata']['resultset']['link']['next']
+                for card in data['payload']['results']:
+                    cards.append({'name': card['name'],
+                                'id': card['id'],
+                                'setName': set_name})
+                    if showBar:
+                        bar()
+                if not showBar:
+                    print(". ", end="", flush=True)
+                first = False
+                if not nxt:
+                    break
     return cards
 
 
