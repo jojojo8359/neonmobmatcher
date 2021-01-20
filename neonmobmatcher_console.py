@@ -1,3 +1,13 @@
+#!/usr/bin/python3
+
+# ****************************************************************************
+# NeonMob Trade Matcher Tool
+# Version: 0.4
+# ****************************************************************************
+# Copyright (c) 2021 Joel Keaton
+# All rights reserved.
+# ****************************************************************************
+
 import sys
 import requests
 from alive_progress import alive_bar
@@ -52,7 +62,6 @@ def GetCards(setid, showBar):
                     print('...', end="", flush=True)
                 break
             else:
-                print(raw.status_code)
                 data = raw.json()
                 nxt = data['payload']['metadata']['resultset']['link']['next']
                 for card in data['payload']['results']:

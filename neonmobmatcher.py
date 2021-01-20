@@ -2,9 +2,9 @@
 
 # ****************************************************************************
 # NeonMob Trade Matcher Tool
-# Version: 0.3
+# Version: 0.4
 # ****************************************************************************
-# Copyright (c) 2020 Joel Keaton
+# Copyright (c) 2021 Joel Keaton
 # All rights reserved.
 # ****************************************************************************
 
@@ -13,6 +13,7 @@ import tkinter as tk
 if sys.platform.startswith('darwin'):
     import tkmacosx as tkx
 import requests
+# from conditional import conditional
 
 
 class ScrolledText(tk.Frame):
@@ -194,35 +195,15 @@ class NeonMobMatcher:
         if card['id'] == -1:
             self.gui.Print("\nCouldn't find card " + card['name'] + " in set " + card['setName'])
             return []
-        self.gui.Print("\nGetting seekers of " + card['name'] + " [" +
-                       str(card['id']) + "]...\n.\n")
+        self.gui.Print("\nGetting seekers of " + card['name'] + " [" + str(card['id']) + "]...\n.\n")
+        seekers = []
+        data = requests.request('GET', "https://www.neonmob.com/api/pieces/" + str(card['id']) + "needers/?completion=desc&grade=desc&wishlisted=desc").json()
+        total = data['count']
 
-        seekers    = []
-        seeker_url = ("https://www.neonmob.com/api/pieces/" +
-                      str(card['id']) +
-                      "/needers/?completion=desc&grade=desc&wishlisted=desc")
-        data       = requests.request('GET', seeker_url).json()
-        nxt        = data['next']
-
-        for seeker in data['results']:
-            seekers.append({'id': seeker['id'],
-                            'name': seeker['name'],
-                            'trader_score': seeker['trader_score'],
-                            'wishlisted': seeker['wishlisted'],
-                            'needs_special_piece_count': seeker['special_piece_count'],
-                            'needs_owned_special_piece_count': seeker['owned_special_piece_count'],
-                            'needs_owned_percentage': seeker['owned_percentage'],
-                            'needs_card_name': card['name'],
-                            'needs_card_set_name': card['setName']})
-
-        while nxt != None:
-            self.gui.Print(".\n")
-
-            next_url  = "https://www.neonmob.com" + nxt
-            next_data = requests.request('GET', next_url).json()
-            nxt       = next_data['next']
-
-            for seeker in next_data['results']:
+        # with conditional(showBar, alive_bar(total, bar='smooth', spinner='dots_recur')) as bar:
+        while True:
+            nxt = data['next']
+            for seeker in data['results']:
                 seekers.append({'id': seeker['id'],
                                 'name': seeker['name'],
                                 'trader_score': seeker['trader_score'],
@@ -232,41 +213,29 @@ class NeonMobMatcher:
                                 'needs_owned_percentage': seeker['owned_percentage'],
                                 'needs_card_name': card['name'],
                                 'needs_card_set_name': card['setName']})
-
+                if showBar:
+                    pass # bar()
+            if not showBar:
+                self.gui.Print(". ")
+            if not nxt:
+                break
+            data = requests.request('GET', "https://www.neonmob.com" + nxt).json()
         return seekers
+
 
     def GetOwners(self, card):
         if card['id'] == -1:
             self.gui.Print("\nCouldn't find card " + card['name'] + " in set " + card['setName'])
             return []
-        self.gui.Print("\nGetting owners of " + card['name'] + " [" +
-                       str(card['id']) + "]...\n.\n")
+        self.gui.Print("\nGetting owners of " + card['name'] + " [" + str(card['id']) + "]...\n.\n")
+        owners = []
+        data = requests.request('GET', "https://www.neonmob.com/api/pieces/" + str(card['id']) + "/owners/?completion=asc&grade=desc&owned=desc").json()
+        total = data['count']
 
-        owners    = []
-        owner_url = ("https://www.neonmob.com/api/pieces/" + str(card['id']) +
-                     "/owners/?completion=asc&grade=desc&owned=desc")
-        data      = requests.request('GET', owner_url).json()
-        nxt       = data['next']
-
-        for owner in data['results']:
-            owners.append({'id': owner['id'],
-                           'name': owner['name'],
-                           'trader_score': owner['trader_score'],
-                           'print_count': owner['print_count'],
-                           'has_special_piece_count': owner['special_piece_count'],
-                           'has_owned_special_piece_count': owner['owned_special_piece_count'],
-                           'has_owned_percentage': owner['owned_percentage'],
-                           'has_card_name': card['name'],
-                           'has_card_set_name': card['setName']})
-
-        while nxt != None:
-            self.gui.Print(".\n")
-
-            next_url  = "https://www.neonmob.com" + nxt
-            next_data = requests.request('GET', next_url).json()
-            nxt       = next_data['next']
-
-            for owner in next_data['results']:
+        # with conditional(showBar, alive_bar(total, bar='smooth', spinner='dots_recur')) as bar:
+        while True:
+            nxt = data['next']
+            for owner in data['results']:
                 owners.append({'id': owner['id'],
                                'name': owner['name'],
                                'trader_score': owner['trader_score'],
@@ -276,38 +245,63 @@ class NeonMobMatcher:
                                'has_owned_percentage': owner['owned_percentage'],
                                'has_card_name': card['name'],
                                'has_card_set_name': card['setName']})
-
+                if showBar:
+                    pass # bar()
+                if not showBar:
+                    self.gui.Print(". ")
+                if not nxt:
+                    break
+                data = requests.request('GET', "https://www.neonmob.com" + nxt).json()
         return owners
 
-    def GetCards(self, setid):
+
+    def GetCards(self, setid, showBar=False):
         set_url  = "https://www.neonmob.com/api/setts/" + str(setid) + "/"
-        set_name = requests.request('GET', set_url).json()['name']
+        data = requests.request('GET', set_url).json()
+        set_name = data['name']
+        total = 0
+        for cat in range(len(data['core_stats'])):
+            total += data['core_stats'][cat]['total']
+        for cat in range(len(data['special_stats'])):
+            total += data['special_stats'][cat]['total']        
 
         self.gui.Print("\nGetting cards from series \"" + set_name + "\"...\n.\n")
 
-        cards     = []
-        cards_url = "https://www.neonmob.com/api/sets/" + str(setid) + "/pieces/"
-        data      = requests.request('GET', cards_url).json()
-        nxt       = data['payload']['metadata']['resultset']['link']['next']
-
-        for card in data['payload']['results']:
-            cards.append({'name': card['name'],
-                          'id': card['id'],
-                          'setName': set_name})
-
-        while nxt != None:
-            self.gui.Print(".\n")
-
-            next_url  = "https://www.neonmob.com" + nxt
-            next_data = requests.request('GET', next_url).json()
-            nxt       = next_data['payload']['metadata']['resultset']['link']['next']
-
-            for card in next_data['payload']['results']:
-                cards.append({'name': card['name'],
-                              'id': card['id'],
-                              'setName': set_name})
-
+        cards = []
+        nxt = "/api/sets/" + str(setid) + "/pieces/"
+        # with conditional(showBar, alive_bar(total, bar='smooth', spinner='dots_recur')) as bar:
+        first = True
+        while True:
+            raw = requests.request('GET', "https://www.neonmob.com" + nxt)
+            if raw.status_code == 500 and first:
+                self.gui.Print("Using fallback card endpoint...\n")
+                raw = requests.request('GET', "https://www.neonmob.com/api/sets/" + str(setid) + "/piece-names")
+                data = raw.json()
+                for card in data:
+                    cards.append({'name': card['name'],
+                                'id': card['id'],
+                                'setName': set_name})
+                    if showBar:
+                        pass # bar()
+                if not showBar:
+                    self.gui.Print("...\n")
+                break
+            else:
+                data = raw.json()
+                nxt = data['payload']['metadata']['resultset']['link']['next']
+                for card in data['payload']['results']:
+                    cards.append({'name': card['name'],
+                                'id': card['id'],
+                                'setName': set_name})
+                    if showBar:
+                        pass # bar()
+                if not showBar:
+                    self.gui.Print(". ")
+                first = False
+                if not nxt:
+                    break
         return cards
+
 
     def GetCardByName(self, card_list, name):
         for card in card_list:
