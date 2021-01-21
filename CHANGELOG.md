@@ -44,8 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
-[Unreleased]: https://github.com/jojojo8359/neonmobmatcher/compare/v0.4...v0.4.1
-[0.4.0]: https://github.com/jojojo8359/neonmobmatcher/compare/v0.3...v0.4
+[Unreleased]: https://github.com/jojojo8359/neonmobmatcher/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/jojojo8359/neonmobmatcher/compare/v0.3...v0.4.0
 [0.3.0]: https://github.com/jojojo8359/neonmobmatcher/compare/v0.2...v0.3
 [0.2.0]: https://github.com/jojojo8359/neonmobmatcher/compare/v0.1...v0.2
 [0.1.0]: https://github.com/jojojo8359/neonmobmatcher/releases/tag/v0.1
