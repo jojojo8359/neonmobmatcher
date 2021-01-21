@@ -2,7 +2,7 @@
 
 # ****************************************************************************
 # NeonMob Trade Matcher Tool
-# Version: 0.4
+# Version: 0.4.0
 # ****************************************************************************
 # Copyright (c) 2021 Joel Keaton
 # All rights reserved.
@@ -10,15 +10,19 @@
 
 import sys
 import tkinter as tk
+
 if sys.platform.startswith('darwin'):
     import tkmacosx as tkx
 import requests
+
+
 # from conditional import conditional
 
 
 class ScrolledText(tk.Frame):
     """ A class for combining a Tk Text object with a Scrollbar object.
     """
+
     def __init__(self, master=None):
         tk.Frame.__init__(self, master)
         self.pack(expand=tk.YES, fill=tk.BOTH)
@@ -50,6 +54,7 @@ class ScrolledText(tk.Frame):
 class MatcherGui:
     """ The GUI class for the NeonMob Matcher application class.
     """
+
     def __init__(self, app):
         self.nm_app = app
         self.window = tk.Tk()
@@ -88,17 +93,17 @@ class MatcherGui:
                                             bg='white',
                                             fg='black',
                                             command=self.SubmitQuery)
-            self.button_quit   = tkx.Button(master=self.frame_5,
-                                            text="Quit",
-                                            bg='white', fg='black',
-                                            command=self.QuitProg)
+            self.button_quit = tkx.Button(master=self.frame_5,
+                                          text="Quit",
+                                          bg='white', fg='black',
+                                          command=self.QuitProg)
         else:
             self.button_submit = tk.Button(master=self.frame_5,
                                            text="Submit",
                                            command=self.SubmitQuery)
-            self.button_quit   = tk.Button(master=self.frame_5,
-                                           text="Quit",
-                                           command=self.QuitProg)
+            self.button_quit = tk.Button(master=self.frame_5,
+                                         text="Quit",
+                                         command=self.QuitProg)
         self.button_submit.grid(row=0, column=0, sticky="w")
         self.button_quit.grid(row=0, column=1, sticky="w")
 
@@ -130,9 +135,9 @@ class MatcherGui:
     def SubmitQuery(self):
         # Get the entry text.
         have_setid_str = self.entry_1.get()
-        have_name      = self.entry_2.get()
+        have_name = self.entry_2.get()
         want_setid_str = self.entry_3.get()
-        want_name      = self.entry_4.get()
+        want_name = self.entry_4.get()
 
         # Clear the output text box.
         self.Clear()
@@ -162,9 +167,10 @@ class MatcherGui:
 class NeonMobMatcher:
     """ The class for the NeonMob Matcher application.
     """
+
     def __init__(self):
         self.grades = ['F', 'F+', 'D-', 'D', 'D+', 'C-', 'C', 'C+', 'B-', 'B',
-                       'B+' ,'A-' ,'A', 'A+']
+                       'B+', 'A-', 'A', 'A+']
 
     def SetGui(self, g):
         self.gui = g
@@ -174,31 +180,31 @@ class NeonMobMatcher:
 
         if have_setid == want_setid:
             shared_series_cards = self.GetCards(have_setid)
-            seekers             = self.GetSeekers(self.GetCardByName(
+            seekers = self.GetSeekers(self.GetCardByName(
                 shared_series_cards, have_name))
             owners = []
             if len(seekers) != 0:
-                owners          = self.GetOwners(self.GetCardByName(
+                owners = self.GetOwners(self.GetCardByName(
                     shared_series_cards, want_name))
         else:
-            seekers =             self.GetSeekers(self.GetCardByName(
+            seekers = self.GetSeekers(self.GetCardByName(
                 self.GetCards(have_setid), have_name))
             owners = []
             if len(seekers) != 0:
-                owners          = self.GetOwners(self.GetCardByName(
+                owners = self.GetOwners(self.GetCardByName(
                     self.GetCards(want_setid), want_name))
 
         commons = self.FindCommonTraders(seekers, owners)
         self.ParseTraders(commons)
 
-    def GetSeekers(self, card):
+    def GetSeekers(self, card, showBar=False):
         if card['id'] == -1:
-            self.gui.Print("\nCouldn't find card " + card['name'] + " in set " + card['setName'])
+            self.gui.Print("\n\nCouldn't find card " + card['name'] + " in set " + card['setName'])
             return []
-        self.gui.Print("\nGetting seekers of " + card['name'] + " [" + str(card['id']) + "]...\n.\n")
+        self.gui.Print("\n\nGetting seekers of " + card['name'] + " [" + str(card['id']) + "]...\n. ")
         seekers = []
-        data = requests.request('GET', "https://www.neonmob.com/api/pieces/" + str(card['id']) + "needers/?completion=desc&grade=desc&wishlisted=desc").json()
-        total = data['count']
+        data = requests.request('GET', "https://www.neonmob.com/api/pieces/" + str(card['id']) + "/needers/?completion=desc&grade=desc&wishlisted=desc").json()
+        # total = data['count']
 
         # with conditional(showBar, alive_bar(total, bar='smooth', spinner='dots_recur')) as bar:
         while True:
@@ -214,7 +220,7 @@ class NeonMobMatcher:
                                 'needs_card_name': card['name'],
                                 'needs_card_set_name': card['setName']})
                 if showBar:
-                    pass # bar()
+                    pass  # bar()
             if not showBar:
                 self.gui.Print(". ")
             if not nxt:
@@ -222,15 +228,14 @@ class NeonMobMatcher:
             data = requests.request('GET', "https://www.neonmob.com" + nxt).json()
         return seekers
 
-
-    def GetOwners(self, card):
+    def GetOwners(self, card, showBar=False):
         if card['id'] == -1:
-            self.gui.Print("\nCouldn't find card " + card['name'] + " in set " + card['setName'])
+            self.gui.Print("\n\nCouldn't find card " + card['name'] + " in set " + card['setName'])
             return []
-        self.gui.Print("\nGetting owners of " + card['name'] + " [" + str(card['id']) + "]...\n.\n")
+        self.gui.Print("\n\nGetting owners of " + card['name'] + " [" + str(card['id']) + "]...\n. ")
         owners = []
         data = requests.request('GET', "https://www.neonmob.com/api/pieces/" + str(card['id']) + "/owners/?completion=asc&grade=desc&owned=desc").json()
-        total = data['count']
+        # total = data['count']
 
         # with conditional(showBar, alive_bar(total, bar='smooth', spinner='dots_recur')) as bar:
         while True:
@@ -246,26 +251,25 @@ class NeonMobMatcher:
                                'has_card_name': card['name'],
                                'has_card_set_name': card['setName']})
                 if showBar:
-                    pass # bar()
-                if not showBar:
-                    self.gui.Print(". ")
-                if not nxt:
-                    break
-                data = requests.request('GET', "https://www.neonmob.com" + nxt).json()
+                    pass  # bar()
+            if not showBar:
+                self.gui.Print(". ")
+            if not nxt:
+                break
+            data = requests.request('GET', "https://www.neonmob.com" + nxt).json()
         return owners
 
-
     def GetCards(self, setid, showBar=False):
-        set_url  = "https://www.neonmob.com/api/setts/" + str(setid) + "/"
+        set_url = "https://www.neonmob.com/api/setts/" + str(setid) + "/"
         data = requests.request('GET', set_url).json()
         set_name = data['name']
         total = 0
         for cat in range(len(data['core_stats'])):
             total += data['core_stats'][cat]['total']
         for cat in range(len(data['special_stats'])):
-            total += data['special_stats'][cat]['total']        
+            total += data['special_stats'][cat]['total']
 
-        self.gui.Print("\nGetting cards from series \"" + set_name + "\"...\n.\n")
+        self.gui.Print("Getting cards from series \"" + set_name + "\"...\n. ")
 
         cards = []
         nxt = "/api/sets/" + str(setid) + "/pieces/"
@@ -279,10 +283,10 @@ class NeonMobMatcher:
                 data = raw.json()
                 for card in data:
                     cards.append({'name': card['name'],
-                                'id': card['id'],
-                                'setName': set_name})
+                                  'id': card['id'],
+                                  'setName': set_name})
                     if showBar:
-                        pass # bar()
+                        pass  # bar()
                 if not showBar:
                     self.gui.Print("...\n")
                 break
@@ -291,17 +295,16 @@ class NeonMobMatcher:
                 nxt = data['payload']['metadata']['resultset']['link']['next']
                 for card in data['payload']['results']:
                     cards.append({'name': card['name'],
-                                'id': card['id'],
-                                'setName': set_name})
+                                  'id': card['id'],
+                                  'setName': set_name})
                     if showBar:
-                        pass # bar()
+                        pass  # bar()
                 if not showBar:
                     self.gui.Print(". ")
                 first = False
                 if not nxt:
                     break
         return cards
-
 
     def GetCardByName(self, card_list, name):
         for card in card_list:
@@ -323,21 +326,21 @@ class NeonMobMatcher:
                 if seeker['id'] == owner['id'] and owner['print_count'] >= 2:
                     user = seeker.copy()
 
-                    user['print_count']                   = owner['print_count']
-                    user['has_special_piece_count']       = owner['has_special_piece_count']
+                    user['print_count'] = owner['print_count']
+                    user['has_special_piece_count'] = owner['has_special_piece_count']
                     user['has_owned_special_piece_count'] = owner['has_owned_special_piece_count']
-                    user['has_owned_percentage']          = owner['has_owned_percentage']
-                    user['has_card_name']                 = owner['has_card_name']
-                    user['has_card_set_name']             = owner['has_card_set_name']
+                    user['has_owned_percentage'] = owner['has_owned_percentage']
+                    user['has_card_name'] = owner['has_card_name']
+                    user['has_card_set_name'] = owner['has_card_set_name']
 
                     commons.append(user)
 
         return commons
 
     def ParseTraders(self, trader_list):
-        if trader_list == []:
-            self.gui.Print("\nNo matches found.\n")
-
+        if not trader_list:
+            self.gui.Print("\n\nNo matches found.\n")
+        self.gui.Print("\n")
         for trader in trader_list:
             needs_spec_perc = "--"
             has_spec_perc = "--"
@@ -347,7 +350,7 @@ class NeonMobMatcher:
             if trader['has_special_piece_count'] > 0:
                 has_spec_perc = str(int((trader['has_owned_special_piece_count'] /
                                          trader['has_special_piece_count']) * 100))
-            self.gui.Print(trader['name'] + " (" +
+            self.gui.Print("\n" + trader['name'] + " (" +
                            self.ParseTraderGrade(trader['trader_score']) +
                            ")\n")
             self.gui.Print("Needs: \"" + trader['needs_card_name'] +
@@ -361,7 +364,7 @@ class NeonMobMatcher:
                            " copies) from series \"" +
                            trader['has_card_set_name'] + "\" (" +
                            str(trader['has_owned_percentage']) + "% core, " +
-                           has_spec_perc + "% special)\n\n")
+                           has_spec_perc + "% special)\n")
 
     def ParseTraderGrade(self, grade):
         return self.grades[int(grade)]

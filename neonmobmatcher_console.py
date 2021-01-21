@@ -2,13 +2,12 @@
 
 # ****************************************************************************
 # NeonMob Trade Matcher Tool
-# Version: 0.4
+# Version: 0.4.0
 # ****************************************************************************
 # Copyright (c) 2021 Joel Keaton
 # All rights reserved.
 # ****************************************************************************
 
-import sys
 import requests
 from alive_progress import alive_bar
 from conditional import conditional
@@ -22,13 +21,14 @@ def DoLookup(have_setid, have_name, want_setid, want_name, showBar):
         if len(seekers) != 0:
             owners = GetOwners(GetCardByName(shared_series_cards, want_name), showBar)
     else:
-        seekers = GetSeekers(GetCardByName(GetCards(have_setid), have_name), showBar)
+        seekers = GetSeekers(GetCardByName(GetCards(have_setid, showBar), have_name), showBar)
         owners = []
         if len(seekers) != 0:
-            owners = GetOwners(GetCardByName(GetCards(want_setid), want_name), showBar)
+            owners = GetOwners(GetCardByName(GetCards(want_setid, showBar), want_name), showBar)
 
     commons = FindCommonTraders(seekers, owners)
     ParseTraders(commons)
+
 
 # 5910 Science Kills for Enchant
 def GetCards(setid, showBar):
@@ -54,8 +54,8 @@ def GetCards(setid, showBar):
                 data = raw.json()
                 for card in data:
                     cards.append({'name': card['name'],
-                                'id': card['id'],
-                                'setName': set_name})
+                                  'id': card['id'],
+                                  'setName': set_name})
                     if showBar:
                         bar()
                 if not showBar:
@@ -66,8 +66,8 @@ def GetCards(setid, showBar):
                 nxt = data['payload']['metadata']['resultset']['link']['next']
                 for card in data['payload']['results']:
                     cards.append({'name': card['name'],
-                                'id': card['id'],
-                                'setName': set_name})
+                                  'id': card['id'],
+                                  'setName': set_name})
                     if showBar:
                         bar()
                 if not showBar:
@@ -124,14 +124,14 @@ def GetOwners(card, showBar):
             nxt = data['next']
             for owner in data['results']:
                 owners.append({'id': owner['id'],
-                                'name': owner['name'],
-                                'trader_score': owner['trader_score'],
-                                'print_count': owner['print_count'],
-                                'has_special_piece_count': owner['special_piece_count'],
-                                'has_owned_special_piece_count': owner['owned_special_piece_count'],
-                                'has_owned_percentage': owner['owned_percentage'],
-                                'has_card_name': card['name'],
-                                'has_card_set_name': card['setName']})
+                               'name': owner['name'],
+                               'trader_score': owner['trader_score'],
+                               'print_count': owner['print_count'],
+                               'has_special_piece_count': owner['special_piece_count'],
+                               'has_owned_special_piece_count': owner['owned_special_piece_count'],
+                               'has_owned_percentage': owner['owned_percentage'],
+                               'has_card_name': card['name'],
+                               'has_card_set_name': card['setName']})
                 if showBar:
                     bar()
             if not showBar:
@@ -176,7 +176,7 @@ def FindCommonTraders(seeker_list, owner_list):
 
 
 def ParseTraders(trader_list):
-    if trader_list == []:
+    if not trader_list:
         print("\nNo matches found.\n")
     print()
 
@@ -191,20 +191,20 @@ def ParseTraders(trader_list):
                                      trader['has_special_piece_count']) * 100))
         print()
         print(trader['name'] + " (" +
-                       ParseTraderGrade(trader['trader_score']) +
-                       ")")
+              ParseTraderGrade(trader['trader_score']) +
+              ")")
         print("Needs: \"" + trader['needs_card_name'] +
-                       ("\" (Wishlisted)"
-                        if trader['wishlisted'] == 1 else "\"") +
-                       " from series \"" + trader['needs_card_set_name'] +
-                       "\" (" + str(trader['needs_owned_percentage']) +
-                       "% core, " + needs_spec_perc + "% special)")
+              ("\" (Wishlisted)"
+               if trader['wishlisted'] == 1 else "\"") +
+              " from series \"" + trader['needs_card_set_name'] +
+              "\" (" + str(trader['needs_owned_percentage']) +
+              "% core, " + needs_spec_perc + "% special)")
         print("Has: \"" + trader['has_card_name'] + "\" (" +
-                       str(trader['print_count']) +
-                       " copies) from series \"" +
-                       trader['has_card_set_name'] + "\" (" +
-                       str(trader['has_owned_percentage']) + "% core, " +
-                       has_spec_perc + "% special)\n")
+              str(trader['print_count']) +
+              " copies) from series \"" +
+              trader['has_card_set_name'] + "\" (" +
+              str(trader['has_owned_percentage']) + "% core, " +
+              has_spec_perc + "% special)\n")
 
 
 def ParseTraderGrade(grade):
