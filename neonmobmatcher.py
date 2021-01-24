@@ -126,11 +126,17 @@ class MatcherGui:
 
     def Clear(self):
         self.text_box.ClearText()
-        self.window.update_idletasks()
+        if sys.platform.startswith('darwin'):
+            self.window.update()
+        else:
+            self.window.update_idletasks()
 
     def Print(self, text):
         self.text_box.AppendText(text)
-        self.window.update_idletasks()
+        if sys.platform.startswith('darwin'):
+            self.window.update()
+        else:
+            self.window.update_idletasks()
 
     def SubmitQuery(self):
         # Get the entry text.
