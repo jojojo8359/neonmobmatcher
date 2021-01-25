@@ -2,11 +2,11 @@
 This tool allows the user to find other NeonMob card collectors for making specific card trades (trading card X for card Y), which the NeonMob site currently does not support.
 
 ## Requirements
-- Python 3
-- TkInter (and TkMacOSX for Mac)
-- requests
-- alive_progress (for console version)
-- conditional (for console version)
+- [Python 3](https://www.python.org/downloads/)
+- [TkInter](https://docs.python.org/3/library/tkinter.html) (and [TkMacOSX](https://pypi.org/project/tkmacosx/) for Mac)
+- [requests](https://pypi.org/project/requests/)
+- [alive_progress](https://pypi.org/project/alive-progress/) (for console version)
+- [conditional](https://pypi.org/project/conditional/) (for console version)
 
 To install all required modules in your environment:
 - `pip3 install -r requirements.txt` for GUI
