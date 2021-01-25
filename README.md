@@ -8,7 +8,10 @@ This tool allows the user to find other NeonMob card collectors for making speci
 - alive_progress (for console version)
 - conditional (for console version)
 
-To install all required modules in your environment, just use `pip3 install -r requirements.txt` (or `pip3 install -r mac.txt` on Mac).
+To install all required modules in your environment:
+- `pip3 install -r requirements.txt` for GUI
+- `pip3 install -r mac-gui.txt` for GUI on Mac
+- `pip3 install -r console.txt` for console version
 
 ## How to Use
 1. Identify the card series ID number (see my [nm-trade-tracker Chrome extension](https://github.com/jojojo8359/nm-trade-tracker)) of the card you wish to trade away and enter in the "Have Set ID" box. (Once the extension is installed, go to the series page for the card series of interest and click on "Your Cards." Hover over the series title, and the six digit series ID number will appear.)
