@@ -1,3 +1,8 @@
 /venv/
 /.idea/
 
+/cache/cards/
+/PySimpleGUI-master/
+/cache/ocache.json
+/cache/scache.json
+PySimpleGUI-master.zip
