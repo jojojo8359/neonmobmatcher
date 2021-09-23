@@ -1,17 +1,19 @@
+# Builtins
 import hashlib
-import random
 import sys
 import traceback
-
-import PySimpleGUI as sg
 import json
-import requests
 from os import path
 import time
 import webbrowser
 
+# pip packages
+import PySimpleGUI as sg
+import requests
+
 sg.theme('DarkGrey9')
 
+# Global variables
 setdbpath = "db.json"
 SETDB = {}
 TARGET = 0
@@ -27,25 +29,44 @@ OCACHE = {}
 keepalivemins = 10
 
 
+# GENERAL I/O SECTION
+
+
+# Database handling
+
+
 def httperror(e):
+    """Handles an HTTP Exception with PySimpleGUI
+
+    :param Exception e: The exception to display
+    """
     tb = traceback.format_exc()
     sg.Print(f'An HTTP exception occurred. Here is the info:', e, tb)
     sg.popup_error(f'AN HTTP EXCEPTION OCCURRED! Exiting...', e, tb)
 
 
 def generalconnerror(e):
+    """Handles a general connection error/exception with PySimpleGUI
+
+    :param Exception e: The exception to display
+    """
     tb = traceback.format_exc()
     sg.Print(f'An exception occurred. Here is the info:', e, tb)
     sg.popup_error(f'AN EXCEPTION OCCURRED! Exiting...', e, tb)
 
 
 def fetchdb():
+    """Gets the raw, most current set database file from GitHub (with connection exception handling)
+
+    :return: The raw database list
+    :rtype:  List[Dict[str, Union[int, str, Dict[str, str]]]]
+    """
     try:
         r = requests.request('GET', 'https://raw.githubusercontent.com/jojojo8359/neonmob-set-db/main/all-sets.json')
         r.raise_for_status()
         db = r.json()
         return db
-    except requests.ConnectionError as e:
+    except requests.ConnectionError:
         sg.popup_error('Connection error occurred! Exiting...')
         sys.exit(1)  # TODO: Rewrite error handling
     except requests.exceptions.HTTPError as e:
@@ -57,18 +78,26 @@ def fetchdb():
 
 
 def downloaddb():
+    """Downloads and saves the latest set database in JSON form
+
+    """
     db = fetchdb()
     with open('db.json', 'w') as f:
         json.dump(db, f)
 
 
 def fetchmd5():
+    """Gets the raw, most current md5 hash of the set database from GitHub (with connection exception handling)
+
+    :return: The pure md5 hash of the database file
+    :rtype:  str
+    """
     try:
         r = requests.request('GET', 'https://raw.githubusercontent.com/jojojo8359/neonmob-set-db/main/all-sets.md5')
         r.raise_for_status()
         md5 = r.text
         return md5.split('  ')[0]
-    except requests.ConnectionError as e:
+    except requests.ConnectionError:
         sg.popup_error('Connection error occurred! Exiting...')
         sys.exit(1)
     except requests.exceptions.HTTPError as e:
@@ -80,6 +109,12 @@ def fetchmd5():
 
 
 def verify(truemd5):
+    """Verifies a local set database file with a known md5 hash stored on GitHub
+
+    :param str truemd5: The known md5 hash from GitHub
+    :return: Whether or not the local hash matches the known hash
+    :rtype:  bool
+    """
     filename = 'db.json'
     with open(filename, 'rb') as f:
         data = f.read()
@@ -88,6 +123,10 @@ def verify(truemd5):
 
 
 def updatedb(beannoying=True):
+    """Handles updating the set database with PySimpleGUI interactions
+
+    :param bool beannoying: Whether or not to show a popup if the database is up to date
+    """
     if not verify(fetchmd5()):
         result = sg.popup_yes_no('Database is not up to date. Download latest version?')
         if result == 'Yes':
@@ -101,7 +140,41 @@ def updatedb(beannoying=True):
             sg.popup_ok('Database is up to date.')
 
 
+def loadSetDB():
+    """Loads the set database from a file and saves it into SETDB (global variable)
+
+    """
+    global SETDB
+    with open(setdbpath, 'r') as f:
+        SETDB = json.load(f)
+
+
+def searchDB(query):
+    """Given a query, searches the loaded set database for instances in the name of sets
+
+    If the set database has not yet been loaded, this function will load the database
+    :param str query: The substring query to search the database for
+    :return: The list of matching results from the database
+    :rtype: List[Dict[Union[str, int], Union[int, str, Dict[str, str]]]]
+    """
+    global SETDB
+    if SETDB == {}:
+        loadSetDB()
+    filtered = list(filter(lambda series: query.lower() in series['name'].lower() or query.lower() in series['name_slug'].lower(), SETDB))
+    # filtered = list(filter(lambda series: query.lower() in series['creator']['username'].lower() or query.lower() in series['creator']['name'].lower(), SETDB))
+    # Use the above to search through creator names/usernames or just `series['id']` for set ids
+    filtered.reverse()
+    return filtered
+
+
+# Settings handling
+
+
 def loadSettings():
+    """Loads custom user settings from a file, then updates global variables
+
+    If no settings are saved, the default settings saved in this file are written into the settings file
+    """
     global setdbpath, MAXRECENT, keepalivemins, AUTOUPDATE
     new = False
     with open('settings.json', 'r') as f:
@@ -118,41 +191,46 @@ def loadSettings():
 
 
 def saveSettings():
+    """Saves custom user settings to a file by reading global variables
+
+    """
     global setdbpath, MAXRECENT, keepalivemins, AUTOUPDATE
     with open('settings.json', 'w') as f:
         json.dump({'setdbpath': setdbpath, 'maxrecent': MAXRECENT, 'keepalivemins': keepalivemins, 'autoupdate': AUTOUPDATE}, f)
 
 
+# History/Recent Handling
+
+
 def loadRecent():
-    global RECENT
+    """Loads the most recent sets that were searched for from a file and saves them into RECENT (global variable)
+
+    """
+    global RECENT, recentpath
     with open(recentpath, 'r') as f:
         RECENT = json.load(f)
 
 
 def saveRecent():
-    global RECENT
+    """Saves the MAXRECENT most recent sets after truncating to a file
+
+    """
+    global RECENT, MAXRECENT, recentpath
     del RECENT[MAXRECENT:]
     with open(recentpath, 'w') as f:
         json.dump(RECENT, f)
 
 
-def loadSetDB():
-    global SETDB
-    with open(setdbpath, 'r') as f:
-        SETDB = json.load(f)
-
-
-def searchDB(query):
-    global SETDB
-    if SETDB == {}:
-        loadSetDB()
-    filtered = list(filter(lambda series: query.lower() in series['name'].lower() or query.lower() in series['name_slug'].lower(), SETDB))
-    # filtered = list(filter(lambda series: query.lower() in series['creator']['username'].lower() or query.lower() in series['creator']['name'].lower(), SETDB))
-    filtered.reverse()
-    return filtered
+# Cache Handling
 
 
 def loadCards(setid):
+    """Loads cached card list for a specified series
+
+    :param int setid: The id of the set to load cards for
+    :return: A list of cards in the set or int 0 if the proper file was not found
+    :rtype: Union[List[Dict[str, Union[str, int]]], int]
+    """
     if path.exists('cache/cards/' + str(setid) + '.json'):
         with open('cache/cards/' + str(setid) + '.json', 'r') as f:
             cards = json.load(f)
@@ -162,11 +240,19 @@ def loadCards(setid):
 
 
 def saveCards(setid, cards):
+    """Saves the card list for a specified series in cache
+
+    :param int setid: The is of the set to save cards of
+    :param List[Dict[str, Union[str, int]]] cards: A list of cards in the set
+    """
     with open('cache/cards/' + str(setid) + '.json', 'w') as f:
         json.dump(cards, f)
 
 
 def loadCache():
+    """Loads the saved seeker and owner cache from their respective files
+
+    """
     global SCACHE, OCACHE
     with open('cache/scache.json', 'r') as f:
         SCACHE = json.load(f)
@@ -174,7 +260,21 @@ def loadCache():
         OCACHE = json.load(f)
 
 
+def saveCache():
+    """Save seeker and owner caches to their respective files
+
+    """
+    global SCACHE, OCACHE
+    with open('cache/scache.json', 'w') as f:
+        json.dump(SCACHE, f)
+    with open('cache/ocache.json', 'w') as f:
+        json.dump(OCACHE, f)
+
+
 def purgeCache():
+    """Remove any entries from seeker and owner caches that have "expired" (based on the time limit)
+
+    """
     global SCACHE, OCACHE
     loadCache()
     currentMillis = int(round(time.time() * 1000))
@@ -188,21 +288,26 @@ def purgeCache():
 
 
 def deleteCache():
+    """Remove all entries from seeker and owner caches
+
+    """
     with open('cache/scache.json', 'w') as f:
         json.dump({}, f)
     with open('cache/ocache.json', 'w') as f:
         json.dump({}, f)
 
 
-def saveCache():
-    global SCACHE, OCACHE
-    with open('cache/scache.json', 'w') as f:
-        json.dump(SCACHE, f)
-    with open('cache/ocache.json', 'w') as f:
-        json.dump(OCACHE, f)
+# MAIN API/NETWORKING SECTION
 
 
 def GetCards(setid, force=False):
+    """Fetches a list of cards for any given series
+
+    :param int setid: The series id to get cards from
+    :param bool force: Whether or not to disregard cards stored in cache
+    :return: A list of cards in the given set
+    :rtype: List[Dict[str, Union[str, int]]]
+    """
     cards = loadCards(setid)
     if cards != 0 and not force:
         print("Card found in cache")
@@ -231,6 +336,13 @@ def GetCards(setid, force=False):
 
 
 def GetSeekers(card, force=False):
+    """Fetches a list of seekers for any given card
+
+    :param Dict[str, Union[str, int]] card: The card to search for seekers of
+    :param bool force: Whether or not to disregard non-expired users in the cache
+    :return: A list of seekers of the specified card
+    :rtype: List[Dict[str, Union[int, float, str, List[Dict[str, Union[str, int]]]]]
+    """
     global SCACHE
 
     purgeCache()
@@ -248,7 +360,7 @@ def GetSeekers(card, force=False):
 
     print("\nGetting seekers of " + card['name'] + " [" + str(card['id']) + "]...")
     seekers = []
-    data = requests.request('GET', "https://www.neonmob.com/api/pieces/" + str(card['id']) + "/needers/?completion=desc&grade=desc&wishlist=desc").json()
+    data = requests.request('GET', "https://www.neonmob.com/api/pieces/" + str(card['id']) + "/needers/?completion=desc&grade=desc&wishlisted=desc").json()
     total = data['count']
     i = 0
 
@@ -288,6 +400,13 @@ def GetSeekers(card, force=False):
 
 
 def GetOwners(card, force=False):
+    """Fetches a list of owners for any given card
+
+    :param Dict[str, Union[str, int]] card: The card to search for owners of
+    :param bool force: Whether or not to disregard non-expired users in the cache
+    :return: A list of owners of the specified card
+    :rtype: List[Dict[str, Union[int, float, str, List[Dict[str, Union[str, int]]]]]
+    """
     global OCACHE
 
     purgeCache()
@@ -344,7 +463,16 @@ def GetOwners(card, force=False):
     return owners
 
 
+# DATA PROCESSING SECTION
+
+
 def processSets(results):
+    """Process set results to be displayed in the set selection window
+
+    :param List[Dict[str, Union[int, str, Dict[str, str]]]] results: A list of raw set results
+    :return: A list of processed results in table form
+    :rtype: List[Union[str, int]]
+    """
     rows = []
     for item in results:
         if item['edition_size'] == 'unlimited':
@@ -356,18 +484,25 @@ def processSets(results):
 
 
 def processCards(results):
+    """Process card results to be displayed in the card selection window
+
+    :param List[Dict[str, Union[str, int]]] results: A list of raw card results
+    :return: A list of processed results in table form
+    :rtype: List[List[Union[str, int]]]
+    """
     rows = []
     for item in results:
         rows.append([item['rarity'], item['name'], item['setName'], item['id']])
     return rows
 
 
-def parseTraderGrade(grade):
-    grades = ['F', 'F+', 'D-', 'D', 'D+', 'C-', 'C', 'C+', 'B-', 'B', 'B+', 'A-', 'A', 'A+']
-    return grades[int(grade)]
-
-
 def processResults(results):
+    """Process trade search results to be displayed in the results window
+
+    :param List[Dict[str, Union[int, str, float, List[Dict[str, Union[str, int]]]]]] results: A list of raw trade search results
+    :return: A list of processed results in table form
+    :rtype: List[List[Union[str, int]]]
+    """
     rows = []
     for person in results:
         rows.append([person['name'], parseTraderGrade(person['trader_score']),
@@ -375,7 +510,26 @@ def processResults(results):
     return rows
 
 
+def parseTraderGrade(grade):
+    """Converts a decimal trader grade into a text representation (defined by NeonMob)
+
+    :param float grade: The decimal trader grade to convert
+    :return: The text representation of the given trader grade
+    :rtype: str
+    """
+    grades = ['F', 'F+', 'D-', 'D', 'D+', 'C-', 'C', 'C+', 'B-', 'B', 'B+', 'A-', 'A', 'A+']
+    return grades[int(grade)]
+
+
 def combinePeople(nestedlist1, nestedlist2):
+    """Combines all people (dictionaries) from two lists, merging data along the way
+
+    For example, if a person is found once in both given lists, the cards they own and need will be combined into one person object and included in the result
+    :param List[List[Dict[str, Union[int, str, float, List[Dict[str, Union[int, str]]]]]]] nestedlist1: The first list of raw people data
+    :param List[List[Dict[str, Union[int, str, float, List[Dict[str, Union[int, str]]]]]]] nestedlist2: The second list of raw people data
+    :return: A list of unique people whose attributes have been combined
+    :rtype: List[Dict[str, Union[int, str, float, List[Dict[str, Union[int, str]]]]]]
+    """
     master = []
     allids = []
     list1 = []
@@ -410,11 +564,15 @@ def combinePeople(nestedlist1, nestedlist2):
 
 
 def getCommons(people, owned, want, mode='and', checkprintcount=False):
-    """
-    people: list of people to search through
-    owned: list of card ids to check
-    want: list of card ids to check
-    mode: 'and' or 'or'
+    """Finds users who have and want specific cards
+
+    :param List[Dict[str, Union[int, str, float, List[Dict[str, Union[int, str]]]]]] people: A list of people to search through
+    :param List[int] owned: A list of user-owned card ids to check
+    :param List[int] want: A list of user-wanted card ids to check
+    :param str mode: 'and' will require all card conditions to be met, while 'or' requires at least one card condition on each side of the trade to be met
+    :param bool checkprintcount: Whether or not to include users with single copies (False will search for singles, True will not)
+    :return: A list of users who meet the conditions specified
+    :rtype: List[Dict[str, Union[int, str, float, List[Dict[str, Union[int, str]]]]]]
     """
     master = []
     if mode == 'and':
@@ -475,6 +633,9 @@ def getCommons(people, owned, want, mode='and', checkprintcount=False):
     return master
 
 
+# GUI SECTION
+
+
 defaultsets = [['', '', '', '']]
 defaultcards = [['', '', '']]
 defaultcards2 = [['', '', '', '']]
@@ -482,7 +643,11 @@ defaultpeople = [['', '', '', '']]
 
 
 def make_mainwindow():
-    # col_widths=[10, 30, 30, 9]
+    """Builds the main window where the user creates a search query
+
+    :return: Built window (finalized)
+    :rtype: PySimpleGUI.Window
+    """
     table1 = [[sg.Table(defaultsets, num_rows=10, key='-TABLE1-', headings=['Rarity', 'Card Name', 'Set Name', 'id'],
                         col_widths=[10, 30, 30, 9], auto_size_columns=False, justification='left',
                         visible_column_map=[True, True, True, False])]]
@@ -510,6 +675,11 @@ def make_mainwindow():
 
 
 def make_setwindow():
+    """Builds the set selection window
+
+    :return: Built window (finalized)
+    :rtype: PySimpleGUI.Window
+    """
     global RECENT
     if not RECENT:
         loadRecent()
@@ -523,6 +693,12 @@ def make_setwindow():
 
 
 def make_cardwindow(setid):
+    """Builds the card selection window
+
+    :param int setid: The id of the set to show cards for
+    :return: Built window (finalized)
+    :rtype: PySimpleGUI.Window
+    """
     layout = [[sg.Table(defaultcards, num_rows=15, key='-CARDTABLE-',
                         headings=['Rarity', 'Card Name', 'Set Name', 'id'], col_widths=[10, 30, 30, 9],
                         auto_size_columns=False, justification='left', visible_column_map=[True, True, False, False],
@@ -537,6 +713,12 @@ def make_cardwindow(setid):
 
 
 def make_resultwindow(results):
+    """Builds the search results window
+
+    :param List[Dict[str, Union[int, str, float, List[Dict[str, Union[int, str]]]]]] results: A list of raw trade search results
+    :return: Built window (finalized)
+    :rtype: PySimpleGUI.Window
+    """
     table1 = [[sg.Table(defaultcards2, num_rows=10, key='-OWNTABLE-',
                         headings=['Rarity', 'Card Name', 'Set Name', 'Prints', 'id'], col_widths=[10, 20, 20, 5, 9],
                         auto_size_columns=False, justification='left',
@@ -567,6 +749,11 @@ def make_resultwindow(results):
 
 
 def make_settingswindow():
+    """Builds the settings window
+
+    :return: Built window (finalized)
+    :rtype: PySimpleGUI.Window
+    """
     # Database
     # Cache
     # History
@@ -588,40 +775,45 @@ def make_settingswindow():
     return window
 
 
-
 items1 = []
 items2 = []
 SETID = 0
 RESULTS = []
 
 
+# MAIN EVENT LOOP
+
+
 def main():
     global TARGET, SETID, RESULTS, RECENT, setdbpath, MAXRECENT, keepalivemins, AUTOUPDATE
     loadSettings()
     window1, window2, window3, window4, settingswindow = make_mainwindow(), None, None, None, None
-    updatedb(beannoying=False)
+    updatedb(beannoying=False)  # Please don't be annoying on startup :)
     while True:
         window, event, values = sg.read_all_windows()
         print(event, values)
 
-        if window == window1 and event in (sg.WIN_CLOSED, 'Exit'):
+        if window == window1 and event in (sg.WIN_CLOSED, 'Exit'):  # Close the program if main window is closed or File -> Exit is selected
             break
 
         # Main window
 
-        if event == 'Settings':
+        if event == 'Settings':  # From File menu
             settingswindow = make_settingswindow()
             continue
-        elif event == 'Update Database':
+        elif event == 'Update Database':  # From File menu
             updatedb()
-        elif event == 'Purge Cache':
+        elif event == 'Purge Cache':  # From File menu
             if sg.popup_yes_no("Are you sure you want to purge the cache? Loading times will be significantly impacted.") == 'Yes':
                 purgeCache()
                 sg.popup("Cache successfully purged!")
 
         if event == 'Search':
-            print(items1)
-            print(items2)
+            if window4 is not None:  # If results from a previous search are still on the screen, kill that window to begin the next search
+                window4.close()
+                window4 = None
+            # print(items1)
+            # print(items2)
             if len(items1) == 0 or len(items2) == 0:
                 sg.popup_error("Please add items to both lists")
             else:
@@ -644,64 +836,62 @@ def main():
 
         # Left side (other person)
 
-        if event == '-OTHERADD-' and not window2:
+        if event == '-OTHERADD-' and not window2:  # Start searching for user-owned cards
             TARGET = 0
             window2 = make_setwindow()
             continue
-        elif event == '-OTHERREMOVE-':
+        elif event == '-OTHERREMOVE-':  # Remove user-owned card from trade list
             try:
                 items1.pop(values['-TABLE1-'][0])
             except IndexError:
                 pass
             window1['-TABLE1-'].update(items1)
-        elif event == '-OTHERCLEAR-':
+        elif event == '-OTHERCLEAR-':  # Clear user-owned card list
             if sg.popup_yes_no("Really clear?") == 'Yes':
                 items1.clear()
                 window1['-TABLE1-'].update(items1)
 
         # Right side (you)
 
-        elif event == '-YOUADD-' and not window2:
+        elif event == '-YOUADD-' and not window2:  # Start searching for user-wanted cards
             TARGET = 1
             window2 = make_setwindow()
             continue
-        elif event == '-YOUREMOVE-':
+        elif event == '-YOUREMOVE-':  # Remove user-wanted cards from trade list
             try:
                 items2.pop(values['-TABLE2-'][0])
             except IndexError:
                 pass
             window1['-TABLE2-'].update(items2)
-        elif event == '-YOUCLEAR-':
+        elif event == '-YOUCLEAR-':  # Clear user-wanted card list
             if sg.popup_yes_no("Really clear?") == 'Yes':
                 items2.clear()
-                window1['-TABLE1-'].update(items2)
+                window1['-TABLE2-'].update(items2)
 
         # Set window
 
-        if window == window2 and event in (sg.WIN_CLOSED, 'Exit'):
+        if window == window2 and event in (sg.WIN_CLOSED, 'Exit'):  # Close the set selection window if it is closed or Exit is pressed
             window2.close()
             window2 = None
             continue
 
-        if window == window2 and values['-INPUT-'] != '':
+        if window == window2 and values['-INPUT-'] != '':  # Update search results when a character is typed in the search box
             search = values['-INPUT-']
             new_values = searchDB(search)
             new_rows = processSets(new_values)
             window['-SETTABLE-'].update(new_rows)
-        elif window == window2:
+        elif window == window2:  # If nothing is in the search box, display recent sets
             if not RECENT:
                 loadRecent()
             window['-SETTABLE-'].update(RECENT)
 
-        if window == window2 and (event == 'OK' or event == '-SETTABLE-') and len(values['-SETTABLE-']):
-            # print(window['-SETTABLE-'].get())
+        if window == window2 and (event == 'OK' or event == '-SETTABLE-') and len(values['-SETTABLE-']):  # Move on to card selection if OK is pressed or a set is selected or double-clicked
             selected = window['-SETTABLE-'].get()[values['-SETTABLE-'][0]]
             if selected in RECENT:
                 RECENT.remove(selected)
             RECENT.insert(0, selected)
             saveRecent()
             SETID = selected[3]
-            # sg.popup('Selected:', selected[0] + ' by ' + selected[1] + ' (' + str(selected[3]) + ')')
             window3 = make_cardwindow(SETID)
             window2.close()
             window2 = None
@@ -709,12 +899,12 @@ def main():
 
         # Card window
 
-        if window == window3 and event in (sg.WIN_CLOSED, 'Exit'):
+        if window == window3 and event in (sg.WIN_CLOSED, 'Exit'):  # Close the card selection window if it is closed or Exit is pressed
             window3.close()
             window3 = None
             continue
 
-        if window == window3 and event == 'Add All of Rarity' and values['-RARITY-'] != '':
+        if window == window3 and event == 'Add All of Rarity' and values['-RARITY-'] != '':  # If 'Add All of Rarity' is pressed and a rarity is selected, add all cards of the selected rarity to the main window
             current_rows = window['-CARDTABLE-'].get()
             rarity_cards = []
             for row in current_rows:
@@ -729,7 +919,7 @@ def main():
             window3.close()
             window3 = None
             continue
-        elif window == window3 and event == 'OK' and len(values['-CARDTABLE-']):
+        elif window == window3 and event == 'OK' and len(values['-CARDTABLE-']):  # If OK is pressed and at least 1 card is selected, add the card(s) to the main window
             indexes = values['-CARDTABLE-']
             items = window['-CARDTABLE-'].get()
             selected = []
@@ -738,17 +928,16 @@ def main():
             if TARGET == 0:
                 items1.extend(selected)
                 window1['-TABLE1-'].update(items1)
-                # window1['-TABLE1-'].expand(expand_x=True, expand_row=True)
             else:
                 items2.extend(selected)
                 window1['-TABLE2-'].update(items2)
             window3.close()
             window3 = None
             continue
-        elif window == window3 and event == 'Refresh':
+        elif window == window3 and event == 'Refresh':  # Re-download card data and refresh the window when Refresh is pressed
             new_rows = processCards(GetCards(SETID, force=True))
             window['-CARDTABLE-'].update(new_rows)
-        elif window == window3 and event == 'Sort By Rarity':
+        elif window == window3 and event == 'Sort By Rarity':  # Sorts the card list by rarity when the table is right-clicked
             current_rows = window['-CARDTABLE-'].get()
             new_rows = []
             for rarity in ['Common', 'Uncommon', 'Rare', 'Very Rare', 'Extra Rare', 'Chase', 'Variant']:
@@ -756,36 +945,40 @@ def main():
                     if row[0] == rarity:
                         new_rows.append(row)
             window['-CARDTABLE-'].update(new_rows)
-        elif window == window3 and event == 'Sort By Name':
+        elif window == window3 and event == 'Sort By Name':  # Sorts the card list by name when the table is right-clicked
             current_rows = window['-CARDTABLE-'].get()
-            new_rows = sorted(current_rows, key=lambda card: card[1])
+            new_rows = sorted(current_rows, key=lambda rowx: rowx[1])
             window['-CARDTABLE-'].update(new_rows)
 
         # Result window
 
-        if window == window4 and event in ('OK', sg.WIN_CLOSED):
+        if window == window4 and event in ('OK', sg.WIN_CLOSED):  # Close the result window if it is closed or OK is pressed
             window4.close()
             window4 = None
             continue
-        if window == window4 and event == '-PEOPLETABLE-' and len(values['-PEOPLETABLE-']):
+        if window == window4 and event == '-PEOPLETABLE-' and len(values['-PEOPLETABLE-']):  # Update the two bottom tables when a result from the top table is selected
             index = values['-PEOPLETABLE-'][0]
             owned = []
+            # noinspection PyTypeChecker
             for ownedcard in RESULTS[index]['owns']:
                 owned.append(
                     [ownedcard['rarity'], ownedcard['card_name'], ownedcard['set_name'], ownedcard['print_count'],
                      ownedcard['card_id']])
             wanted = []
+            # noinspection PyTypeChecker
             for wantedcard in RESULTS[index]['wants']:
                 wanted.append(
                     [wantedcard['rarity'], wantedcard['card_name'], wantedcard['set_name'], 'Yes' if wantedcard['wishlisted'] else 'No',
                      wantedcard['card_id']])
             window['-OWNTABLE-'].update(owned)
             window['-WANTTABLE-'].update(wanted)
+            # noinspection PyTypeChecker
             window['-OTHERFRAME-'].update(value=RESULTS[index]['name'] + " Has:")
             window['-PRINTNUMS-'].update(value='')
-        elif event == '-OWNTABLE-' and len(values['-OWNTABLE-']) and len(values['-PEOPLETABLE-']):
+        elif event == '-OWNTABLE-' and len(values['-OWNTABLE-']) and len(values['-PEOPLETABLE-']):  # Display print numbers when a card in the bottom left table is selected
             cardindex = values['-OWNTABLE-'][0]
             personindex = values['-PEOPLETABLE-'][0]
+            # noinspection PyTypeChecker
             userid = RESULTS[personindex]['id']
             cardid = window['-OWNTABLE-'].get()[cardindex][4]
             data = requests.request('GET', 'https://www.neonmob.com/api/users/' + str(userid) + '/piece/' + str(cardid) + '/detail/').json()
@@ -794,27 +987,29 @@ def main():
             for copy in data['refs'][data['payload'][1]]['prints']:
                 prints.append(copy['print_num'])
             window['-PRINTNUMS-'].update(value='Print Numbers: ' + ', '.join(str(i) for i in prints))
-        if window == window4 and event == 'Open User Profile' and len(values['-PEOPLETABLE-']):
+        if window == window4 and event == 'Open User Profile' and len(values['-PEOPLETABLE-']):  # Open a user's profile when a user from the result list is selected and the button is pressed
             index = values['-PEOPLETABLE-'][0]
+            # noinspection PyTypeChecker
             webbrowser.open_new_tab('https://www.neonmob.com/user/' + str(RESULTS[index]['id']))
 
         # Settings window
 
-        if window == settingswindow and event == 'OK':
+        if window == settingswindow and event == 'OK':  # Saves settings when OK is pressed
             setdbpath = values['-SETDBPATH-']
-            AUTOUPDATE = values['-AUTOUPDATE-']
-            keepalivemins = values['-KEEPALIVE-']
-            MAXRECENT = values['-MAXRECENT-']
+            AUTOUPDATE = bool(values['-AUTOUPDATE-'])
+            keepalivemins = int(values['-KEEPALIVE-'])
+            MAXRECENT = int(values['-MAXRECENT-'])
             saveSettings()
             sg.popup("Settings saved!")
             settingswindow.close()
             settingswindow = None
             continue
-        elif window == settingswindow and event in ('Cancel', sg.WIN_CLOSED):
+        elif window == settingswindow and event in ('Cancel', sg.WIN_CLOSED):  # Closes the settings window when it is closed or Cancel is pressed
             settingswindow.close()
             settingswindow = None
             continue
 
+    # Make sure all other windows get closed when the program "shuts down" (breaks out of the main loop)
     window1.close()
     if window2 is not None:
         window2.close()
