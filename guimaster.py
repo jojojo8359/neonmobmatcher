@@ -343,7 +343,7 @@ def GetSeekers(card, force=False):
     :return: A list of seekers of the specified card
     :rtype: List[Dict[str, Union[int, float, str, List[Dict[str, Union[str, int]]]]]
     """
-    global SCACHE
+    global SCACHE, SEARCHING
 
     purgeCache()
 
@@ -358,7 +358,7 @@ def GetSeekers(card, force=False):
             print("Time is under 10 minutes")
             return SCACHE[str(card['id'])]['seekers']
 
-    print("\nGetting seekers of " + card['name'] + " [" + str(card['id']) + "]...")
+    # print("\nGetting seekers of " + card['name'] + " [" + str(card['id']) + "]...")
     seekers = []
     data = requests.request('GET', "https://www.neonmob.com/api/pieces/" + str(card['id']) + "/needers/?completion=desc&grade=desc&wishlisted=desc").json()
     total = data['count']
@@ -385,7 +385,10 @@ def GetSeekers(card, force=False):
                             'owns': []
                             })
             i += 1
-            sg.one_line_progress_meter("Fetching seekers...", i, total, "Getting seekers of " + card['name'] + " [" + str(card['id']) + "]...", orientation='h')
+            if (not sg.one_line_progress_meter("Fetching seekers...", i, total, "Getting seekers of " + card['name'] + " [" + str(card['id']) + "]...", orientation='h', key='-SEEKERBAR-')) and SEARCHING:
+                sg.one_line_progress_meter_cancel('-SEEKERBAR-')
+                SEARCHING = False
+                return -1
         if not nxt:
             break
         data = requests.request('GET', "https://www.neonmob.com" + nxt).json()
@@ -407,7 +410,7 @@ def GetOwners(card, force=False):
     :return: A list of owners of the specified card
     :rtype: List[Dict[str, Union[int, float, str, List[Dict[str, Union[str, int]]]]]
     """
-    global OCACHE
+    global OCACHE, SEARCHING
 
     purgeCache()
 
@@ -422,7 +425,7 @@ def GetOwners(card, force=False):
             print("Time is under 10 minutes")
             return OCACHE[str(card['id'])]['owners']
 
-    print("\nGetting owners of " + card['name'] + " [" + str(card['id']) + "]...")
+    # print("\nGetting owners of " + card['name'] + " [" + str(card['id']) + "]...")
     owners = []
     data = requests.request('GET', "https://www.neonmob.com/api/pieces/" + str(card['id']) + "/owners/?completion=asc&grade=desc&owned=desc").json()
     total = data['count']
@@ -449,7 +452,10 @@ def GetOwners(card, force=False):
                            'wants': []
                            })
             i += 1
-            sg.one_line_progress_meter('Fetching owners...', i, total, "Getting owners of " + card['name'] + " [" + str(card['id']) + "]...", orientation='h')
+            if (not sg.one_line_progress_meter('Fetching owners...', i, total, "Getting owners of " + card['name'] + " [" + str(card['id']) + "]...", orientation='h', key='-OWNERBAR-')) and SEARCHING:
+                sg.one_line_progress_meter_cancel('-OWNERBAR-')
+                SEARCHING = False
+                return -1
         if not nxt:
             break
         data = requests.request('GET', "https://www.neonmob.com" + nxt).json()
@@ -667,10 +673,11 @@ def make_mainwindow():
 
     layout = [[sg.Menu([['&File', ['Settings', '---', 'Update Database', 'Purge Cache', '---', 'E&xit']]], background_color='#FFFFFF', text_color='#000000')],
               [sg.Frame(layout=frame1, title="Other Person's Cards"), sg.Frame(layout=frame2, title="Your Cards")],
-              [sg.Button('Search'), sg.Checkbox('Force Refresh', default=False, key='-REFRESH-'),
+              [sg.Button('Search', key='-SEARCHBUTTON-'), sg.Checkbox('Force Refresh', default=False, key='-REFRESH-'),
                sg.Combo(['And', 'Or'], 'And', key='-MODE-', readonly=True), sg.Checkbox('> 2 Prints', default=True, key='-PRINTS-')]]
 
-    window = sg.Window('Table Test', layout, finalize=True)
+    window = sg.Window('NeonMobMatcher v1.0.0', layout, finalize=True, resizable=True)
+    # window.maximize()
     return window
 
 
@@ -680,15 +687,19 @@ def make_setwindow():
     :return: Built window (finalized)
     :rtype: PySimpleGUI.Window
     """
-    global RECENT
+    global RECENT, TARGET
     if not RECENT:
         loadRecent()
+    if TARGET == 0:
+        target_text = "Another Person Has:"
+    else:
+        target_text = "You Have:"
     layout = [[sg.Input(size=(30, 1), enable_events=True, key='-INPUT-', tooltip='Search for a set by name', focus=True)],
               [sg.Table(RECENT, num_rows=15, key='-SETTABLE-', headings=['Set Name', 'Author', ' ', 'id'],
                         col_widths=[30, 20, 3, 8], auto_size_columns=False, justification='left',
                         visible_column_map=[True, True, True, False], bind_return_key=True)],
-              [sg.Button('OK'), sg.Button('Exit')]]
-    window = sg.Window('Listbox with Search', layout, finalize=True)
+              [sg.Button('OK'), sg.Button('Cancel')]]
+    window = sg.Window('Set Selection | ' + target_text, layout, finalize=True)
     return window
 
 
@@ -699,14 +710,19 @@ def make_cardwindow(setid):
     :return: Built window (finalized)
     :rtype: PySimpleGUI.Window
     """
+    global TARGET
+    if TARGET == 0:
+        target_text = "Another Person Has:"
+    else:
+        target_text = "You Have:"
     layout = [[sg.Table(defaultcards, num_rows=15, key='-CARDTABLE-',
                         headings=['Rarity', 'Card Name', 'Set Name', 'id'], col_widths=[10, 30, 30, 9],
                         auto_size_columns=False, justification='left', visible_column_map=[True, True, False, False],
                         right_click_menu=['&Right', ['Sort By Rarity', 'Sort By Name']], select_mode=sg.TABLE_SELECT_MODE_EXTENDED)],
-              [sg.Button('OK'), sg.Button('Exit'), sg.Button('Refresh'),
+              [sg.Button('OK'), sg.Button('Cancel'), sg.Button('Refresh'),
                sg.Combo(['Common', 'Uncommon', 'Rare', 'Very Rare', 'Extra Rare', 'Chase', 'Variant'], key='-RARITY-', readonly=True),
                sg.Button('Add All of Rarity')]]
-    window = sg.Window('Card Selection', layout, finalize=True)
+    window = sg.Window('Card Selection | ' + target_text, layout, finalize=True)
     new_rows = processCards(GetCards(setid))
     window['-CARDTABLE-'].update(new_rows)
     return window
@@ -779,13 +795,14 @@ items1 = []
 items2 = []
 SETID = 0
 RESULTS = []
+SEARCHING = False
 
 
 # MAIN EVENT LOOP
 
 
 def main():
-    global TARGET, SETID, RESULTS, RECENT, setdbpath, MAXRECENT, keepalivemins, AUTOUPDATE
+    global TARGET, SETID, RESULTS, RECENT, setdbpath, MAXRECENT, keepalivemins, AUTOUPDATE, SEARCHING
     loadSettings()
     window1, window2, window3, window4, settingswindow = make_mainwindow(), None, None, None, None
     updatedb(beannoying=False)  # Please don't be annoying on startup :)
@@ -798,79 +815,126 @@ def main():
 
         # Main window
 
-        if event == 'Settings':  # From File menu
+        if event == 'Settings' and not SEARCHING:  # From File menu
             settingswindow = make_settingswindow()
             continue
-        elif event == 'Update Database':  # From File menu
+        elif event == 'Update Database' and not SEARCHING:  # From File menu
             updatedb()
-        elif event == 'Purge Cache':  # From File menu
+        elif event == 'Purge Cache' and not SEARCHING:  # From File menu
             if sg.popup_yes_no("Are you sure you want to purge the cache? Loading times will be significantly impacted.") == 'Yes':
                 purgeCache()
                 sg.popup("Cache successfully purged!")
 
-        if event == 'Search':
-            if window4 is not None:  # If results from a previous search are still on the screen, kill that window to begin the next search
-                window4.close()
-                window4 = None
-            # print(items1)
-            # print(items2)
-            if len(items1) == 0 or len(items2) == 0:
-                sg.popup_error("Please add items to both lists")
-            else:
-                owners = []
-                for card in items1:
-                    carddict = {'name': card[1], 'rarity': card[0], 'id': card[3], 'setName': card[2]}
-                    newowners = GetOwners(carddict, force=values['-REFRESH-'])
-                    owners.append(newowners)
-                seekers = []
-                for card in items2:
-                    carddict = {'name': card[1], 'rarity': card[0], 'id': card[3], 'setName': card[2]}
-                    newseekers = GetSeekers(carddict, force=values['-REFRESH-'])
-                    seekers.append(newseekers)
-                combined = combinePeople(owners, seekers)
-                filtered = getCommons(combined, [x[3] for x in items1], [x[3] for x in items2], mode=values['-MODE-'].lower(), checkprintcount=values['-PRINTS-'])
-                RESULTS = filtered
-                # print(filtered)
-                window4 = make_resultwindow(RESULTS)
-                continue
+        if event == '-SEARCHBUTTON-':
+            if not SEARCHING:
+                SEARCHING = True
+                window['-SEARCHBUTTON-'].update(disabled=True)
+                window['-REFRESH-'].update(disabled=True)
+                window['-MODE-'].update(disabled=True)
+                window['-PRINTS-'].update(disabled=True)
+                if window4 is not None:  # If results from a previous search are still on the screen, kill that window to begin the next search
+                    window4.close()
+                    window4 = None
+                if window3 is not None:  # If the user is still searching through cards, close that window to begin the search
+                    window3.close()
+                    window3 = None
+                if window2 is not None:  # If the user is still searching through sets, close that window to begin the search
+                    window2.close()
+                    window2 = None
+                if settingswindow is not None:  # If the user is changing settings, close that window to begin the search
+                    settingswindow.close()
+                    settingswindow = None
+                # print(items1)
+                # print(items2)
+                if len(items1) == 0 or len(items2) == 0:
+                    sg.popup_error("Please add items to both lists")
+                else:
+                    canceled = False
+                    owners = []
+                    for card in items1:
+                        carddict = {'name': card[1], 'rarity': card[0], 'id': card[3], 'setName': card[2]}
+                        newowners = GetOwners(carddict, force=values['-REFRESH-'])
+                        if newowners != -1:
+                            owners.append(newowners)
+                        else:
+                            canceled = True
+                            break
+                    seekers = []
+                    if not canceled:
+                        for card in items2:
+                            carddict = {'name': card[1], 'rarity': card[0], 'id': card[3], 'setName': card[2]}
+                            newseekers = GetSeekers(carddict, force=values['-REFRESH-'])
+                            if newseekers != -1:
+                                seekers.append(newseekers)
+                            else:
+                                canceled = True
+                                break
+                    if canceled:
+                        sg.popup("Search was canceled.")
+                    else:
+                        combined = combinePeople(owners, seekers)
+                        filtered = getCommons(combined, [x[3] for x in items1], [x[3] for x in items2], mode=values['-MODE-'].lower(), checkprintcount=values['-PRINTS-'])
+                        RESULTS = filtered
+                        # print(filtered)
+                        window4 = make_resultwindow(RESULTS)
+                    SEARCHING = False
+                    window['-SEARCHBUTTON-'].update(disabled=False)
+                    window['-REFRESH-'].update(disabled=False)
+                    window['-MODE-'].update(disabled=False)
+                    window['-PRINTS-'].update(disabled=False)
+                    continue
 
         # Left side (other person)
 
-        if event == '-OTHERADD-' and not window2:  # Start searching for user-owned cards
-            TARGET = 0
-            window2 = make_setwindow()
+        if event == '-OTHERADD-' and not SEARCHING:  # Start searching for user-owned cards
+            if window2 is not None:
+                window2.ding()
+                window2.bring_to_front()
+            elif window3 is not None:
+                window3.ding()
+                window3.bring_to_front()
+            else:
+                TARGET = 0
+                window2 = make_setwindow()
             continue
-        elif event == '-OTHERREMOVE-':  # Remove user-owned card from trade list
+        elif event == '-OTHERREMOVE-' and not SEARCHING:  # Remove user-owned card from trade list
             try:
                 items1.pop(values['-TABLE1-'][0])
             except IndexError:
                 pass
             window1['-TABLE1-'].update(items1)
-        elif event == '-OTHERCLEAR-':  # Clear user-owned card list
+        elif event == '-OTHERCLEAR-' and not SEARCHING:  # Clear user-owned card list
             if sg.popup_yes_no("Really clear?") == 'Yes':
                 items1.clear()
                 window1['-TABLE1-'].update(items1)
 
         # Right side (you)
 
-        elif event == '-YOUADD-' and not window2:  # Start searching for user-wanted cards
-            TARGET = 1
-            window2 = make_setwindow()
+        elif event == '-YOUADD-' and not SEARCHING:  # Start searching for user-wanted cards
+            if window2 is not None:
+                window2.ding()
+                window2.bring_to_front()
+            elif window3 is not None:
+                window3.ding()
+                window3.bring_to_front()
+            else:
+                TARGET = 1
+                window2 = make_setwindow()
             continue
-        elif event == '-YOUREMOVE-':  # Remove user-wanted cards from trade list
+        elif event == '-YOUREMOVE-' and not SEARCHING:  # Remove user-wanted cards from trade list
             try:
                 items2.pop(values['-TABLE2-'][0])
             except IndexError:
                 pass
             window1['-TABLE2-'].update(items2)
-        elif event == '-YOUCLEAR-':  # Clear user-wanted card list
+        elif event == '-YOUCLEAR-' and not SEARCHING:  # Clear user-wanted card list
             if sg.popup_yes_no("Really clear?") == 'Yes':
                 items2.clear()
                 window1['-TABLE2-'].update(items2)
 
         # Set window
 
-        if window == window2 and event in (sg.WIN_CLOSED, 'Exit'):  # Close the set selection window if it is closed or Exit is pressed
+        if window == window2 and event in (sg.WIN_CLOSED, 'Cancel'):  # Close the set selection window if it is closed or Exit is pressed
             window2.close()
             window2 = None
             continue
@@ -899,7 +963,7 @@ def main():
 
         # Card window
 
-        if window == window3 and event in (sg.WIN_CLOSED, 'Exit'):  # Close the card selection window if it is closed or Exit is pressed
+        if window == window3 and event in (sg.WIN_CLOSED, 'Cancel'):  # Close the card selection window if it is closed or Exit is pressed
             window3.close()
             window3 = None
             continue
