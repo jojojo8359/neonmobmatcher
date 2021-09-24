@@ -363,8 +363,11 @@ def GetSeekers(card, force=False):
     data = requests.request('GET', "https://www.neonmob.com/api/pieces/" + str(card['id']) + "/needers/?completion=desc&grade=desc&wishlisted=desc").json()
     total = data['count']
     i = 0
+    canceled = False
 
     while True:
+        if canceled:
+            break
         nxt = data['next']
         for seeker in data['results']:
             seekers.append({'id': seeker['id'],
@@ -385,13 +388,15 @@ def GetSeekers(card, force=False):
                             'owns': []
                             })
             i += 1
-            if (not sg.one_line_progress_meter("Fetching seekers...", i, total, "Getting seekers of " + card['name'] + " [" + str(card['id']) + "]...", orientation='h', key='-SEEKERBAR-')) and SEARCHING:
-                sg.one_line_progress_meter_cancel('-SEEKERBAR-')
-                SEARCHING = False
-                return -1
+            if not sg.one_line_progress_meter("Fetching seekers...", i, total, "Getting seekers of " + card['name'] + " [" + str(card['id']) + "]...", orientation='h', key='-SEEKERBAR-'):
+                canceled = True
+                break
         if not nxt:
             break
         data = requests.request('GET', "https://www.neonmob.com" + nxt).json()
+    if len(seekers) != total:
+        SEARCHING = False
+        return -1
     try:
         SCACHE.pop(str(card['id']))
     except KeyError:
@@ -430,8 +435,11 @@ def GetOwners(card, force=False):
     data = requests.request('GET', "https://www.neonmob.com/api/pieces/" + str(card['id']) + "/owners/?completion=asc&grade=desc&owned=desc").json()
     total = data['count']
     i = 0
+    canceled = False
 
     while True:
+        if canceled:
+            break
         nxt = data['next']
         for owner in data['results']:
             owners.append({'id': owner['id'],
@@ -452,13 +460,15 @@ def GetOwners(card, force=False):
                            'wants': []
                            })
             i += 1
-            if (not sg.one_line_progress_meter('Fetching owners...', i, total, "Getting owners of " + card['name'] + " [" + str(card['id']) + "]...", orientation='h', key='-OWNERBAR-')) and SEARCHING:
-                sg.one_line_progress_meter_cancel('-OWNERBAR-')
-                SEARCHING = False
-                return -1
+            if not sg.one_line_progress_meter('Fetching owners...', i, total, "Getting owners of " + card['name'] + " [" + str(card['id']) + "]...", orientation='h', key='-OWNERBAR-'):
+                canceled = True
+                break
         if not nxt:
             break
         data = requests.request('GET', "https://www.neonmob.com" + nxt).json()
+    if len(owners) != total:
+        SEARCHING = False
+        return -1
     try:
         OCACHE.pop(str(card['id']))
     except KeyError:
@@ -854,21 +864,21 @@ def main():
                     for card in items1:
                         carddict = {'name': card[1], 'rarity': card[0], 'id': card[3], 'setName': card[2]}
                         newowners = GetOwners(carddict, force=values['-REFRESH-'])
-                        if newowners != -1:
-                            owners.append(newowners)
-                        else:
+                        if newowners == -1:
                             canceled = True
                             break
+                        else:
+                            owners.append(newowners)
                     seekers = []
                     if not canceled:
                         for card in items2:
                             carddict = {'name': card[1], 'rarity': card[0], 'id': card[3], 'setName': card[2]}
                             newseekers = GetSeekers(carddict, force=values['-REFRESH-'])
-                            if newseekers != -1:
-                                seekers.append(newseekers)
-                            else:
+                            if newseekers == -1:
                                 canceled = True
                                 break
+                            else:
+                                seekers.append(newseekers)
                     if canceled:
                         sg.popup("Search was canceled.")
                     else:
