@@ -1,11 +1,14 @@
 # Builtins
 import hashlib
+import os
 import sys
 import traceback
 import json
+from json import JSONDecodeError
 from os import path
 import time
 import webbrowser
+import re
 
 # pip packages
 import PySimpleGUI as sg
@@ -15,7 +18,7 @@ sg.theme('DarkGrey9')
 
 # Global variables
 setdbpath = "db.json"
-SETDB = {}
+SETDB = []
 TARGET = 0
 AUTOUPDATE = True
 
@@ -82,7 +85,7 @@ def downloaddb():
 
     """
     db = fetchdb()
-    with open('db.json', 'w') as f:
+    with open(setdbpath, 'w') as f:
         json.dump(db, f)
 
 
@@ -115,10 +118,14 @@ def verify(truemd5):
     :return: Whether or not the local hash matches the known hash
     :rtype:  bool
     """
-    filename = 'db.json'
-    with open(filename, 'rb') as f:
-        data = f.read()
-        returnedmd5 = hashlib.md5(data).hexdigest()
+    try:
+        with open(setdbpath, 'rb') as f:
+            data = f.read()
+            returnedmd5 = hashlib.md5(data).hexdigest()
+    except OSError:
+        with open(setdbpath, 'w') as f:
+            f.write("[]")
+        return False
     return truemd5 == returnedmd5
 
 
@@ -145,8 +152,13 @@ def loadSetDB():
 
     """
     global SETDB
-    with open(setdbpath, 'r') as f:
-        SETDB = json.load(f)
+    try:
+        with open(setdbpath, 'r') as f:
+            SETDB = json.load(f)
+    except OSError:
+        with open(setdbpath, 'w') as f:
+            f.write("[]")
+        SETDB = []
 
 
 def searchDB(query):
@@ -158,7 +170,7 @@ def searchDB(query):
     :rtype: List[Dict[Union[str, int], Union[int, str, Dict[str, str]]]]
     """
     global SETDB
-    if SETDB == {}:
+    if not SETDB:
         loadSetDB()
     filtered = list(filter(lambda series: query.lower() in series['name'].lower() or query.lower() in series['name_slug'].lower(), SETDB))
     # filtered = list(filter(lambda series: query.lower() in series['creator']['username'].lower() or query.lower() in series['creator']['name'].lower(), SETDB))
@@ -177,15 +189,20 @@ def loadSettings():
     """
     global setdbpath, MAXRECENT, keepalivemins, AUTOUPDATE
     new = False
-    with open('settings.json', 'r') as f:
-        saved = json.load(f)
-        if saved != {}:
-            setdbpath = saved['setdbpath']
-            MAXRECENT = saved['maxrecent']
-            keepalivemins = saved['keepalivemins']
-            AUTOUPDATE = saved['autoupdate']
-        else:
-            new = True
+    try:
+        with open('settings.json', 'r') as f:
+            saved = json.load(f)
+            if saved != {}:
+                setdbpath = saved['setdbpath']
+                MAXRECENT = saved['maxrecent']
+                keepalivemins = saved['keepalivemins']
+                AUTOUPDATE = saved['autoupdate']
+            else:
+                new = True
+    except OSError:
+        saveSettings()
+    except JSONDecodeError:
+        saveSettings()
     if new:
         saveSettings()
 
@@ -207,8 +224,13 @@ def loadRecent():
 
     """
     global RECENT, recentpath
-    with open(recentpath, 'r') as f:
-        RECENT = json.load(f)
+    try:
+        with open(recentpath, 'r') as f:
+            RECENT = json.load(f)
+    except OSError:
+        saveRecent()
+    except JSONDecodeError:
+        saveRecent()
 
 
 def saveRecent():
@@ -245,6 +267,10 @@ def saveCards(setid, cards):
     :param int setid: The is of the set to save cards of
     :param List[Dict[str, Union[str, int]]] cards: A list of cards in the set
     """
+    if not path.exists('cache/'):
+        os.mkdir('cache/')
+    if not path.exists('cache/cards/'):
+        os.mkdir('cache/cards/')
     with open('cache/cards/' + str(setid) + '.json', 'w') as f:
         json.dump(cards, f)
 
@@ -254,6 +280,12 @@ def loadCache():
 
     """
     global SCACHE, OCACHE
+    if not path.exists('cache/'):
+        os.mkdir('cache/')
+    if not path.exists('cache/scache.json'):
+        saveCache()
+    if not path.exists('cache/ocache.json'):
+        saveCache()
     with open('cache/scache.json', 'r') as f:
         SCACHE = json.load(f)
     with open('cache/ocache.json', 'r') as f:
@@ -495,7 +527,15 @@ def processSets(results):
             char = '∞'
         else:
             char = 'LE'
-        rows.append([item['name'], item['creator']['name'], char, item['id']])
+        name = item['name']
+        emoji_pattern = re.compile("["
+                                   u"\U0001F600-\U0001F64F"  # emoticons
+                                   u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+                                   u"\U0001F680-\U0001F6FF"  # transport & map symbols
+                                   u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+                                   "]+", flags=re.UNICODE)
+
+        rows.append([emoji_pattern.sub(r'', name), item['creator']['name'], char, item['id']])
     return rows
 
 
@@ -622,16 +662,15 @@ def getCommons(people, owned, want, mode='and', checkprintcount=False):
     elif mode == 'or':
         for person in people:
             mastercheck = False
-            printcheck = False
+            printcheck = True
             if len(person['owns']) == 0 or len(person['wants']) == 0:
                 continue
             for ownedid in owned:
                 cardcheck = False
                 for ownedcard in person['owns']:
-                    if checkprintcount and ownedcard['print_count'] < 2:
-                        printcheck = True
-                        break
-                    elif ownedid == ownedcard['card_id']:
+                    if checkprintcount and ownedcard['print_count'] >= 2:
+                        printcheck = False
+                    if ownedid == ownedcard['card_id']:
                         cardcheck = True
                         break
                 if cardcheck:
@@ -681,10 +720,16 @@ def make_mainwindow():
     frame1 = [[sg.Column(table1), sg.Column(column1)]]
     frame2 = [[sg.Column(table2), sg.Column(column2)]]
 
-    layout = [[sg.Menu([['&File', ['Settings', '---', 'Update Database', 'Purge Cache', '---', 'E&xit']]], background_color='#FFFFFF', text_color='#000000')],
-              [sg.Frame(layout=frame1, title="Other Person's Cards"), sg.Frame(layout=frame2, title="Your Cards")],
+    if sys.platform == 'darwin':
+        menu = sg.Menu([['&File', ['Settings', '---', 'Update Database', 'Purge Cache', '---', 'E&xit']]])
+    else:
+        menu = sg.Menu([['&File', ['Settings', '---', 'Update Database', 'Purge Cache', '---', 'E&xit']]],
+                background_color='#FFFFFF', text_color='#000000')
+
+    layout = [[menu],
+              [sg.Frame(layout=frame1, title="Cards I'm seeking from someone else"), sg.Frame(layout=frame2, title="Cards I want to trade away")],
               [sg.Button('Search', key='-SEARCHBUTTON-'), sg.Checkbox('Force Refresh', default=False, key='-REFRESH-'),
-               sg.Combo(['And', 'Or'], 'And', key='-MODE-', readonly=True), sg.Checkbox('> 2 Prints', default=True, key='-PRINTS-')]]
+               sg.Combo(['And', 'Or'], 'And', key='-MODE-', readonly=True), sg.Checkbox('2+ Prints', default=True, key='-PRINTS-')]]
 
     window = sg.Window('NeonMobMatcher v1.0.0', layout, finalize=True, resizable=True)
     # window.maximize()

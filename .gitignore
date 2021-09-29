@@ -9,3 +9,4 @@ PySimpleGUI-master.zip
 db.json
 recent.json
 settings.json
+*.pyc
