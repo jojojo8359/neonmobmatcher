@@ -12,6 +12,8 @@ To install all required modules in your environment:
 
 `pip3 install -r requirements.txt`
 
+Note: These dependencies are not required if you are running a standalone binary of the application.
+
 ## How to Use
 The search list has two sides: one for cards you want to receive in a trade, and one for cards you want to trade away. In order to add cards to one side, click the "+" button to the right of the list. Begin typing in the box to search for the series by title. (As you use NMM more, this window will begin displaying recent series you searched for when the search box is left empty.) Then, select the name of the card you want from the resulting list for that series to add it to the trade list. (You can sort the list by name or rarity by right-clicking anywhere in the table.) If you want to select multiple cards from a series at once, either Shift-click or Control-click another card in the list. If you want to add all cards of a specific rarity to the trade list, select that rarity from the dropdown at the bottom of the window and click "Add All of Rarity." To remove a card from a trade list, click on the card title to highlight it and click the "-" button on the same side of the trade. To clear all cards from a trade list, click the "C" button.
 
