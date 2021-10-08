@@ -4,7 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] (0.4.2)
+## [Unreleased] (1.0.1)
+
+## [1.0.0] - 2021-09-??
+### Added
+- Brand-new GUI layouts (with basic settings you can tweak)
+- Configurable caches for search results and card data
+- Automatically retrieves set data from [neonmob-set-db](https://github.com/jojojo8359/neonmob-set-db)
+- Documentation
+
+### Changed
+- Switched from raw TkInter to PySimpleGUI
+
+### Removed
+- Old platform-dependent requirements files
 
 ## [0.4.1] - 2021-03-10
 ### Changed
@@ -54,7 +67,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
-[Unreleased]: https://github.com/jojojo8359/neonmobmatcher/compare/v0.4.1...v0.4.2
+[Unreleased]: https://github.com/jojojo8359/neonmobmatcher/compare/v1.0.0...v1.0.1
+[1.0.0]: https://github.com/jojojo8359/neonmobmatcher/compare/v0.4.1...v1.0.0
 [0.4.1]: https://github.com/jojojo8359/neonmobmatcher/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/jojojo8359/neonmobmatcher/compare/v0.3...v0.4.0
 [0.3.0]: https://github.com/jojojo8359/neonmobmatcher/compare/v0.2...v0.3

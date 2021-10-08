@@ -209,7 +209,7 @@ class NeonMobMatcher:
             return []
         self.gui.Print("\n\nGetting seekers of " + card['name'] + " [" + str(card['id']) + "]...\n. ")
         seekers = []
-        data = requests.request('GET', "https://www.neonmob.com/api/pieces/" + str(card['id']) + "/needers/?completion=desc&grade=desc&wishlisted=desc").json()
+        data = requests.request('GET', "https://www.neonmob.com/api/pieces/" + str(card['id']) + "/needers/?completion=desc&grade=desc&wishlist=desc").json()
         # total = data['count']
 
         # with conditional(showBar, alive_bar(total, bar='smooth', spinner='dots_recur')) as bar:
