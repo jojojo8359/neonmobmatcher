@@ -10,3 +10,6 @@ db.json
 recent.json
 settings.json
 *.pyc
+/build/
+/dist/
+*.exe

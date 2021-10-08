@@ -1,3 +1,14 @@
+#!/usr/bin/python3
+
+# ****************************************************************************
+# NeonMob Trade Matcher Tool
+# Version: 1.0.0
+# ****************************************************************************
+# Copyright (c) 2021 Joel Keaton
+# All rights reserved.
+# ****************************************************************************
+
+
 # Builtins
 import hashlib
 import os
@@ -932,12 +943,12 @@ def main():
                         RESULTS = filtered
                         # print(filtered)
                         window4 = make_resultwindow(RESULTS)
-                    SEARCHING = False
-                    window['-SEARCHBUTTON-'].update(disabled=False)
-                    window['-REFRESH-'].update(disabled=False)
-                    window['-MODE-'].update(disabled=False)
-                    window['-PRINTS-'].update(disabled=False)
-                    continue
+                SEARCHING = False
+                window['-SEARCHBUTTON-'].update(disabled=False)
+                window['-REFRESH-'].update(disabled=False)
+                window['-MODE-'].update(disabled=False)
+                window['-PRINTS-'].update(disabled=False)
+                continue
 
         # Left side (other person)
 
