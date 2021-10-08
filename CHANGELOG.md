@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] (1.0.1)
 
-## [1.0.0] - 2021-09-??
+## [1.0.0] - 2021-10-8
 ### Added
 - Brand-new GUI layouts (with basic settings you can tweak)
 - Configurable caches for search results and card data
