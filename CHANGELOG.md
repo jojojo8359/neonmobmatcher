@@ -4,7 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] (1.0.1)
+## [Unreleased] (2.0.0)
+
+## [1.1.0] - 2022-3-24
+### Added
+- Preliminary ability to sort cards on card selection screen
+- Preliminary ability to sort search results
+- More data on search results screen
+
+### Changed
+- Switched from a synchronous GUI model to an asynchronous GUI with PySimpleGUI
+- Switched from plain HTTP requests to using [Sessions](https://docs.python-requests.org/en/latest/user/advanced/#session-objects) for a minor (but noticeable) speed boost when requesting data from NeonMob servers
+
+### Fixed
+- Bug where repeated searches with different card criteria would include cards not specified in search
 
 ## [1.0.0] - 2021-10-8
 ### Added
@@ -67,7 +80,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
-[Unreleased]: https://github.com/jojojo8359/neonmobmatcher/compare/v1.0.0...v1.0.1
+[Unreleased]: https://github.com/jojojo8359/neonmobmatcher/compare/v1.1.0...v2.0.0
+[1.1.0]: https://github.com/jojojo8359/neonmobmatcher/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/jojojo8359/neonmobmatcher/compare/v0.4.1...v1.0.0
 [0.4.1]: https://github.com/jojojo8359/neonmobmatcher/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/jojojo8359/neonmobmatcher/compare/v0.3...v0.4.0
