@@ -13,3 +13,4 @@ settings.json
 /build/
 /dist/
 *.exe
+.python-version
