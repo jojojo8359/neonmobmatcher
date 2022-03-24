@@ -1,0 +1,25 @@
+NO SESSION
+2.301 -> 34.617 TOTAL = 32.316
+
+OWNERS - 2.301 -> 10.467 = 8.166
+
+SEEKERS - 10.933 -> 33.828 = 22.895
+
+RESULTS - 33.929 -> 34.617 = 0.688
+
+
+SESSION
+2.534 -> 33.972 TOTAL = 31.438
+
+OWNERS - 2.534 -> 9.066 = 6.532
+
+SEEKERS - 10.650 -> 33.534 = 22.884
+
+RESULTS - 33.597 -> 33.972 = 0.375
+
+
+session:
+2.71% increase total
+20% increase owners
+0.04% increase seekers
+45.5% increase results
