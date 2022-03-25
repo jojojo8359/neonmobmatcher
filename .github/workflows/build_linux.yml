@@ -33,7 +33,7 @@ jobs:
         pip install pyinstaller
         pip install -r requirements.txt
         
-    - name: Build app (Windows)
+    - name: Build app (Linux)
       run: |
         pyinstaller --onefile --windowed ${{ github.event.inputs.mainfile }} -n ${{ format('neonmobmatcher-{0}', env.TAG) }}
       env:
