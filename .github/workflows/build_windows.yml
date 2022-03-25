@@ -35,7 +35,7 @@ jobs:
         
     - name: Build app (Windows)
       run: |
-        pyinstaller --onefile --windowed ${{ github.event.inputs.mainfile }} -n ${{ format('neonmobmatcher-{0}', '{ env.TAG }') }}
+        pyinstaller --onefile --windowed ${{ github.event.inputs.mainfile }} -n ${{ format('neonmobmatcher-{0}', env.TAG) }}
       env:
         TAG: ${{ github.event.inputs.tag }}
         MAINFILE: ${{ github.event.inputs.mainfile }}
@@ -43,7 +43,7 @@ jobs:
     - name: Add binary to release
       uses: AButler/upload-release-assets@v2.0
       with:
-        files: format('dist/neonmobmatcher-{0}.exe', '{ env.TAG }')
+        files: format('dist/neonmobmatcher-{0}.exe', env.TAG)
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         release-tag: ${{ github.events.input.tag }}
       env:
