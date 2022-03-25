@@ -38,7 +38,7 @@ jobs:
         py2applet --make-setup ${{ format('{0}.py', env.MAINFILE) }}
         python setup.py py2app
         mv ${{ format('dist/{0}.app', env.MAINFILE) }} ${{ format('neonmobmatcher-{0}.app', env.TAG) }}
-        7z a ${{ format('neonmobmatcher-{0}.app.zip', env.TAG) }} ${{ format('neonmobmatcher-{0}.app', env.TAG) }}
+        7z a ${{ format('neonmobmatcher-{0}_macos10.app.zip', env.TAG) }} ${{ format('neonmobmatcher-{0}.app', env.TAG) }}
       env:
         TAG: ${{ github.event.inputs.tag }}
         MAINFILE: ${{ github.event.inputs.mainfile }}
@@ -46,7 +46,7 @@ jobs:
     - name: Add binary to release
       uses: AButler/upload-release-assets@v2.0
       with:
-        files: ${{ format('neonmobmatcher-{0}.app.zip', env.TAG) }}
+        files: ${{ format('neonmobmatcher-{0}_macos10.app.zip', env.TAG) }}
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         release-tag: ${{ github.event.inputs.tag }}
       env:
