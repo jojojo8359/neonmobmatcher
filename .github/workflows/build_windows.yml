@@ -45,6 +45,6 @@ jobs:
       with:
         files: ${{ format('dist/neonmobmatcher-{0}.exe', env.TAG) }}
         repo-token: ${{ secrets.GITHUB_TOKEN }}
-        release-tag: ${{ github.events.input.tag }}
+        release-tag: ${{ github.event.inputs.tag }}
       env:
         TAG: ${{ github.event.inputs.tag }}
