@@ -35,7 +35,7 @@ jobs:
         
     - name: Build app (Windows)
       run: |
-        pyinstaller --onefile --windowed $MAINFILE -n neonmobmatcher-%TAG%
+        pyinstaller --onefile --windowed %MAINFILE% -n neonmobmatcher-%TAG%
       env:
         TAG: ${{ github.event.inputs.tag }}
         MAINFILE: ${{ github.event.inputs.mainfile }}
