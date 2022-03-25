@@ -1,0 +1,50 @@
+name: Build application (Linux)
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag name (vX.X.X)'
+        required: True
+        type: string
+      mainfile:
+        description: 'Main program file (must end with .py)'
+        required: True
+        type: string
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.inputs.tag }}
+    
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.9"
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+        pip install -r requirements.txt
+        
+    - name: Build app (Windows)
+      run: |
+        pyinstaller --onefile --windowed ${{ github.event.inputs.mainfile }} -n ${{ format('neonmobmatcher-{0}', env.TAG) }}
+      env:
+        TAG: ${{ github.event.inputs.tag }}
+        MAINFILE: ${{ github.event.inputs.mainfile }}
+    
+    - name: Add binary to release
+      uses: AButler/upload-release-assets@v2.0
+      with:
+        files: ${{ format('dist/neonmobmatcher-{0}', env.TAG) }}
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        release-tag: ${{ github.event.inputs.tag }}
+      env:
+        TAG: ${{ github.event.inputs.tag }}
