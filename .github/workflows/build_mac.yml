@@ -36,7 +36,7 @@ jobs:
     - name: Build app (Mac OS)
       run: |
         py2applet --make-setup ${{ format('{0}.py', env.MAINFILE) }}
-        python setup.py ${{ format('neonmobmatcher-{0}', env.TAG) }}
+        python setup.py py2app
         mv ${{ format('dist/{0}.app', env.MAINFILE) }} ${{ format('neonmobmatcher-{0}.app', env.TAG) }}
         7z a ${{ format('neonmobmatcher-{0}.app.zip', env.TAG) }} ${{ format('neonmobmatcher-{0}.app', env.TAG) }}
       env:
