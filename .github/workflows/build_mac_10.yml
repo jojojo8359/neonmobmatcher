@@ -1,4 +1,4 @@
-name: Build application (Mac OS)
+name: Build application (Mac OS 10)
 
 on:
   workflow_dispatch:
@@ -33,7 +33,7 @@ jobs:
         pip install py2app
         pip install -r requirements.txt
         
-    - name: Build app (Mac OS)
+    - name: Build app (Mac OS 10)
       run: |
         py2applet --make-setup ${{ format('{0}.py', env.MAINFILE) }}
         python setup.py py2app
