@@ -14,7 +14,6 @@ import hashlib
 import os
 import sys
 import threading
-import traceback
 import json
 from json import JSONDecodeError
 from os import path
@@ -26,8 +25,6 @@ from typing import *
 # pip packages
 import PySimpleGUI as sg
 import requests
-
-import gifs
 
 sg.theme('DarkGrey9')
 

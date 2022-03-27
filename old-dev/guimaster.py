@@ -201,7 +201,7 @@ def loadSettings():
     global setdbpath, MAXRECENT, keepalivemins, AUTOUPDATE
     new = False
     try:
-        with open('settings.json', 'r') as f:
+        with open('../settings.json', 'r') as f:
             saved = json.load(f)
             if saved != {}:
                 setdbpath = saved['setdbpath']
@@ -223,7 +223,7 @@ def saveSettings():
 
     """
     global setdbpath, MAXRECENT, keepalivemins, AUTOUPDATE
-    with open('settings.json', 'w') as f:
+    with open('../settings.json', 'w') as f:
         json.dump({'setdbpath': setdbpath, 'maxrecent': MAXRECENT, 'keepalivemins': keepalivemins, 'autoupdate': AUTOUPDATE}, f)
 
 
@@ -278,10 +278,10 @@ def saveCards(setid, cards):
     :param int setid: The is of the set to save cards of
     :param List[Dict[str, Union[str, int]]] cards: A list of cards in the set
     """
-    if not path.exists('cache/'):
-        os.mkdir('cache/')
-    if not path.exists('cache/cards/'):
-        os.mkdir('cache/cards/')
+    if not path.exists('../cache/'):
+        os.mkdir('../cache/')
+    if not path.exists('../cache/cards/'):
+        os.mkdir('../cache/cards/')
     with open('cache/cards/' + str(setid) + '.json', 'w') as f:
         json.dump(cards, f)
 
@@ -291,15 +291,15 @@ def loadCache():
 
     """
     global SCACHE, OCACHE
-    if not path.exists('cache/'):
-        os.mkdir('cache/')
-    if not path.exists('cache/scache.json'):
+    if not path.exists('../cache/'):
+        os.mkdir('../cache/')
+    if not path.exists('../cache/scache.json'):
         saveCache()
-    if not path.exists('cache/ocache.json'):
+    if not path.exists('../cache/ocache.json'):
         saveCache()
-    with open('cache/scache.json', 'r') as f:
+    with open('../cache/scache.json', 'r') as f:
         SCACHE = json.load(f)
-    with open('cache/ocache.json', 'r') as f:
+    with open('../cache/ocache.json', 'r') as f:
         OCACHE = json.load(f)
 
 
@@ -308,9 +308,9 @@ def saveCache():
 
     """
     global SCACHE, OCACHE
-    with open('cache/scache.json', 'w') as f:
+    with open('../cache/scache.json', 'w') as f:
         json.dump(SCACHE, f)
-    with open('cache/ocache.json', 'w') as f:
+    with open('../cache/ocache.json', 'w') as f:
         json.dump(OCACHE, f)
 
 
@@ -334,9 +334,9 @@ def deleteCache():
     """Remove all entries from seeker and owner caches
 
     """
-    with open('cache/scache.json', 'w') as f:
+    with open('../cache/scache.json', 'w') as f:
         json.dump({}, f)
-    with open('cache/ocache.json', 'w') as f:
+    with open('../cache/ocache.json', 'w') as f:
         json.dump({}, f)
 
 
