@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.1.1] - 2023-1-14
 ### Fixed
 - Sucuri Firewall Issue for API endpoints
+- Updated version number and copyright correctly
 
 ## [1.1.0] - 2022-3-24
 ### Added
