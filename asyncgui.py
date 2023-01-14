@@ -37,6 +37,7 @@ DB_MD5_URL = "https://raw.githubusercontent.com/jojojo8359/neonmob-set-db/main/a
 DB_JSON_URL = "https://raw.githubusercontent.com/jojojo8359/neonmob-set-db/main/all-sets.json"
 
 SESSION = requests.Session()
+SESSION.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36'})
 
 
 def get_json(url):
@@ -595,7 +596,7 @@ def make_mainwindow():
               [sg.Button('Search', key='-SEARCHBUTTON-'), sg.Checkbox('Force Refresh', default=False, key='-REFRESH-'),
                sg.Combo(['And', 'Or'], 'And', key='-MODE-', readonly=True), sg.Checkbox('2+ Prints', default=True, key='-PRINTS-')]]
 
-    window = sg.Window('NeonMobMatcher v1.0.0', layout, finalize=True, resizable=True)
+    window = sg.Window('NeonMobMatcher v1.1.1', layout, finalize=True, resizable=True)
     # window.maximize()
     return window
 
